@@ -14,17 +14,18 @@
         <router-view></router-view>
     </div>
     <template id="home-tpl">
-        <el-row>
-            <el-col v-for="(img, index) in arr" :key="img.id" :col-id="img.id">
-                <div>
-                    <el-link type="primary" @click="goToLink(img)"><span v-html="img.hrefDispay"></span></el-link>
-                </div>
-                <template v-if="img.fileExt">
-                    <el-image style="max-width: 100%;"  :src="getImg(img.href)"  :preview-src-list="bigImgList" lazy></el-image>
-                    <video style="max-width: 100%;" v-if="img.fileExt === 'mp4'" :src="getImg(img.href)" controls></video>
-                </template>
-            </el-col>
-        </el-row>
+       <div style="height: 90vh; overflow-y: auto;">
+           <div v-for="(img, index) in arr" :key="img.id" :col-id="img.id">
+               <div>
+                   <el-link type="primary" @click="goToLink(img)"><span v-html="img.hrefDispay"></span></el-link>
+               </div>
+               <template v-if="img.fileExt">
+                   <el-image style="max-width: 100%; display: block; min-height: 200px;"
+                             :src="getImg(img.href)"  :preview-src-list="bigImgList" lazy ></el-image>
+                   <video style="max-width: 100%;" v-if="img.fileExt === 'mp4'" :src="getImg(img.href)" controls></video>
+               </template>
+           </div>
+       </div>
     </template>
     <script src="./jquery.js"></script>
 <!--    <script src="https://cdn.bootcdn.net/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>-->
@@ -34,7 +35,8 @@
     <!-- Import component library -->
     <script src="//unpkg.com/element-plus"></script>
     <script type="module">
-        const SEVER_ORIGIN =  location.protocol + '//' + location.hostname + ':8080'
+        const SEVER_ORIGIN =  location.protocol + '//' + location.hostname + ':8080';
+        console.log(SEVER_ORIGIN)
 
         function uuidv4() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

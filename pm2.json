@@ -1,0 +1,7 @@
+{
+  "apps": [{
+    "name": "image-client",
+    "script": "server.js",
+    "args": "['--test=1']"
+  }]
+}

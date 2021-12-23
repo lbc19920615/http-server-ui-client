@@ -40,7 +40,9 @@ function fetchDirectoryURL(url = '', baseHref = '') {
           fileExt,
           id,
         }
-        arr.push(ret)
+        if (!ret.hrefDispay.startsWith('/.')) {
+          arr.push(ret)
+        }
       })
       // console.log(baseHref,  arr[0].href)
       // arr[0].href = arr[0].href.replace(baseHref, '')

@@ -6,7 +6,7 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
-    <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
+    <link rel="stylesheet" href="element-plus.css" />
 </head>
 <body>
     <div id="tpl" style="display: none"></div>
@@ -27,15 +27,15 @@
            </div>
        </div>
     </template>
-    <script src="./jquery.js"></script>
+    <script src="/jquery.js"></script>
 <!--    <script src="https://cdn.bootcdn.net/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>-->
     <!-- Import Vue 3 -->
-    <script src="//unpkg.com/vue@next"></script>
-    <script src="./vue-router.js"></script>
+    <script src="/Vue.js"></script>
+    <script src="/vue-router.js"></script>
     <!-- Import component library -->
-    <script src="//unpkg.com/element-plus"></script>
+    <script src="/element-plus.js"></script>
     <script type="module">
-        const SEVER_ORIGIN =  location.protocol + '//' + location.hostname + ':8080';
+        const SEVER_ORIGIN =  location.protocol + '//' + location.hostname + ':7100';
         console.log(SEVER_ORIGIN)
 
         function uuidv4() {

@@ -1,10 +1,17 @@
+html {
+    height: 100%;
+}
+
 body {
     background-color: #fefffe;
-    margin: 20px;
+    padding: 20px;
+    height: 100%;
+    margin: 0;
+    box-sizing: border-box;
 }
 @media screen and (min-width: 767px) {
     .el-image__inner {
-        object-fit: none;
+        object-fit: contain;
     }
 }
 .el-image {

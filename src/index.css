@@ -2,9 +2,10 @@ body {
     background-color: #fefffe;
     margin: 20px;
 }
-
-.el-image__inner {
-    object-fit: none;
+@media screen and (min-width: 767px) {
+    .el-image__inner {
+        object-fit: none;
+    }
 }
 .el-image {
     /*max-width: none !important;*/

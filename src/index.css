@@ -10,7 +10,7 @@ body {
 .el-image {
     /*max-width: none !important;*/
     /*width: max-content;*/
-    min-height: 1px !important;
+    min-height: 100px !important;
     /*height: max-content;*/
 }
 .el-image.loaded {

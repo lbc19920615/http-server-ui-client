@@ -20,9 +20,17 @@
                    <el-link type="primary" @click="goToLink(img)"><span v-html="img.hrefDispay"></span></el-link>
                </div>
                <template v-if="img.fileExt">
-                   <el-image style="max-width: 100%; display: block; min-height: 200px;"
-                             :src="getImg(img.href)"  :preview-src-list="bigImgList" lazy ></el-image>
-                   <video style="max-width: 100%;" v-if="img.fileExt === 'mp4'" :src="getImg(img.href)" controls></video>
+                   <template v-if="checkMimeType(img.fileExt, 'image')">
+                       <el-image style="max-width: 100%; display: block; min-height: 200px;"
+                                 :src="getImg(img.href)"  :preview-src-list="bigImgList" lazy ></el-image>
+                   </template>
+                   <template v-else-if="img.fileExt === 'mp4'">
+
+                       <video style="max-width: 100%;"  :src="getImg(img.href)" controls></video>
+                   </template>
+                   <template v-else>
+                       <a target="_blank" :href="getImg(img.href)">{{img}}</a>
+                   </template>
                </template>
            </div>
        </div>
@@ -52,7 +60,7 @@
         }
 
         function fetchDirectoryURL(url = '', baseHref = '') {
-         return new Promise(resolve => {
+         return new Promise((resolve, reject) => {
              fetch(url).then((res) => {
                  return res.text()
              }).then(data => {
@@ -80,6 +88,10 @@
                  // arr[0].href = arr[0].href.replace(baseHref, '')
                  // arr[0].href = arr[0].href.slice(0, arr[0].href.length - 1)
                  // arr[0].hrefDispay =  decodeURIComponent(arr[0].href)
+                 // console.log('resolveHref', arr)
+                 if (!Array.isArray(arr) || !arr[0]) {
+                     reject(new Error('sdsds'))
+                 }
                  resolveHref(arr[0], baseHref)
                  arr = arr.sort(function(a,b){
                      return a.fileNameNotExt-b.fileNameNotExt;
@@ -198,6 +210,16 @@
                                 href: resolvePath(href, img.href)
                             }
                         })
+                    },
+                    checkMimeType(fileExt, lib) {
+                        let imageExt = ['png', 'jpg', 'jpeg']
+                        if (lib === 'image') {
+                            return imageExt.includes(fileExt)
+                        }
+                        return false
+                    },
+                    jumpHttpServerLink(v) {
+                        window.open(SEVER_ORIGIN + v)
                     }
                 }
             });

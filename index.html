@@ -16,9 +16,6 @@
     <template id="home-tpl">
        <div style="height: 90vh; overflow-y: auto;">
            <div v-for="(img, index) in arr" :key="img.id" :col-id="img.id">
-               <div>
-                   <el-link type="primary" @click="goToLink(img)"><span v-html="img.hrefDispay"></span></el-link>
-               </div>
                <template v-if="img.fileExt">
                    <template v-if="checkMimeType(img.fileExt, 'image')">
                        <el-image style="max-width: 100%; display: block; min-height: 200px;"
@@ -29,8 +26,13 @@
                        <video style="max-width: 100%;"  :src="getImg(img.href)" controls></video>
                    </template>
                    <template v-else>
-                       <a target="_blank" :href="getImg(img.href)">{{img}}</a>
+                       <el-link target="_blank" :href="getImg(img.href)"><span v-html="img.hrefDispay"></span></el-link>
                    </template>
+               </template>
+               <template v-else>
+                   <div>
+                       <el-link type="primary" @click="goToLink(img)"><span v-html="img.hrefDispay"></span></el-link>
+                   </div>
                </template>
            </div>
        </div>

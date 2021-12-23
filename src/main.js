@@ -1,6 +1,6 @@
 import './index.css'
 
-const SEVER_ORIGIN =  location.protocol + '//' + location.hostname + ':7100';
+const SEVER_ORIGIN =   'https://' + location.hostname + ':7100';
 console.log(SEVER_ORIGIN)
 
 function uuidv4() {

@@ -23,3 +23,8 @@ body {
 .el-image.loaded {
     width: max-content;
 }
+.back-link a {
+    width: 150px;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+}

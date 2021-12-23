@@ -33,7 +33,7 @@
                    </template>
                </template>
                <template v-else>
-                   <div>
+                   <div :class="{'back-link': img.hrefDispay === '..'}">
                        <el-link type="primary" @click="goToLink(img)"><span v-html="img.hrefDispay"></span></el-link>
                    </div>
                </template>

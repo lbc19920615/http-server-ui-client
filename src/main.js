@@ -1,7 +1,21 @@
 import './index.css'
+import qs from 'qs'
+
+function getHereDoc(fn) {
+  return fn.toString().match(/\/\*\s*([\s\S]*?)\s*\*\//m)[1];
+}
 
 const SEVER_ORIGIN =   'http://' + location.hostname + ':7100';
-console.log(SEVER_ORIGIN)
+// console.log(SEVER_ORIGIN)
+
+let str = qs.stringify({
+  ssds: '111',
+  name: 'sdsdsdsd'
+});
+import('./sds.linkvue?' + str).then(res => {
+  let m = res.default
+  // console.log(getHereDoc(m.fun))
+})
 
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

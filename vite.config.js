@@ -1,10 +1,11 @@
 import {defineConfig, loadEnv} from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-
+import {linkvue} from "./plugins/linkvue";
 
 let plugins = [
 
+  linkvue(),
   vue(),
 
 ]

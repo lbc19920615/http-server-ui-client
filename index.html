@@ -22,6 +22,7 @@
                        <el-image :class="{'loaded': img.loaded}"  style="max-width: 100%; display: block; min-height: 200px;" :alt="img.hrefDispay"
                                  :src="getImg(img.href)"
                                  @load="onImageLoad(img, $event)"
+
                                  :preview-src-list="bigImgList" lazy ></el-image>
                    </template>
                    <template v-else-if="img.fileExt === 'mp4'">

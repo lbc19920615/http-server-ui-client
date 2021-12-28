@@ -26,6 +26,8 @@
     "vite": "^2.4.4"
   },
   "dependencies": {
+    "json5": "^2.2.0",
+    "node-find-files": "^1.0.0",
     "qs": "^6.10.2"
   }
 }

@@ -12,7 +12,6 @@ openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out c
  http-server --p 7100 --cors 
 ```
 
-
 2. 开启服务
 
 ```bash

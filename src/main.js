@@ -1,5 +1,6 @@
 import './index.css'
 import qs from 'qs'
+import JSON5 from 'json5';
 
 function getHereDoc(fn) {
   return fn.toString().match(/\/\*\s*([\s\S]*?)\s*\*\//m)[1];
@@ -14,7 +15,9 @@ let str = qs.stringify({
 });
 import('./sds.linkvue?' + str).then(res => {
   let m = res.default
-  // console.log(getHereDoc(m.fun))
+  let str = getHereDoc(m.fun)
+  let obj = JSON5.parse(str)
+  // console.log(obj)
 })
 
 function uuidv4() {
@@ -25,8 +28,8 @@ function uuidv4() {
 }
 
 function resolveHref(v, baseHref) {
-  v.href = v.href.replace(baseHref, '')
-  v.href = v.href.slice(0, v.href.length - 1)
+  // v.href = v.href.replace(baseHref, '')
+  // v.href = v.href.slice(0, v.href.length - 1)
   v.hrefDispay =  decodeURIComponent(v.href)
 }
 
@@ -54,6 +57,7 @@ function fetchDirectoryURL(url = '', baseHref = '') {
           fileExt,
           id,
         }
+        // console.log(ret)
         if (!ret.hrefDispay.startsWith('/.')) {
           arr.push(ret)
         }
@@ -64,7 +68,7 @@ function fetchDirectoryURL(url = '', baseHref = '') {
       // arr[0].hrefDispay =  decodeURIComponent(arr[0].href)
       // console.log('resolveHref', arr)
       if (!Array.isArray(arr) || !arr[0]) {
-        reject(new Error('sdsds'))
+        reject(new Error('arr '))
       }
       resolveHref(arr[0], baseHref)
       arr = arr.sort(function(a,b){
@@ -197,7 +201,7 @@ const Home = Vue.defineComponent({
     },
     onImageLoad(img, $event) {
       img.loaded = true;
-      console.log(this)
+      // console.log(this)
     }
   }
 });

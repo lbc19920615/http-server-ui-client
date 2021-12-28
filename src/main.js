@@ -175,7 +175,9 @@ const Home = Vue.defineComponent({
     },
     async setData(link) {
 
-      let data = await fetchDirectoryURL(SEVER_ORIGIN + link.href, link.href)
+      let u = new URL(SEVER_ORIGIN + link.href)
+      u.searchParams.append('v', Date.now())
+      let data = await fetchDirectoryURL(u.toString(), link.href)
       // console.log(data)
       this.arr = data
     },

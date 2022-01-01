@@ -7,7 +7,10 @@ function getHereDoc(fn) {
 }
 
 const SEVER_ORIGIN =   'http://' + location.hostname + ':7100';
-// console.log(SEVER_ORIGIN)
+const hashQuery = location.hash.replace('#/?', '?')
+let globalURL = new  URL('https://www.baidu.com' + hashQuery)
+let globalSearchParams = globalURL.searchParams
+let globalHREF = globalSearchParams.get('href')
 
 let str = qs.stringify({
   ssds: '111',
@@ -23,6 +26,12 @@ function uuidv4() {
 }
 
 function resolveHref(v, baseHref) {
+  // let href = v.href
+  // console.log(href)
+  if (baseHref && v.href.includes(baseHref)) {
+    v.href = v.href.replace(baseHref, '')
+    v.href = v.href.slice(0, v.href.length - 1)
+  }
   // v.href = v.href.replace(baseHref, '')
   // v.href = v.href.slice(0, v.href.length - 1)
   v.hrefDispay =  decodeURIComponent(v.href)
@@ -182,7 +191,8 @@ const Home = Vue.defineComponent({
       this.$router.push({
         path: '/',
         query: {
-          href: resolvePath(href, img.href)
+          href: resolvePath(href, img.href),
+          v: Date.now()
         }
       })
     },

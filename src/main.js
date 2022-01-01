@@ -39,7 +39,21 @@ function resolveHref(v, baseHref) {
 
 function fetchDirectoryURL(url = '', baseHref = '') {
   return new Promise((resolve, reject) => {
-    fetch(url).then((res) => {
+    console.log(url)
+    var myHeaders = new Headers();
+    myHeaders.append('pragma', 'no-cache');
+    myHeaders.append('cache-control', 'no-cache');
+    // myHeaders.append('custom', '1');
+
+    var myInit = {
+      method: 'GET',
+      headers: myHeaders,
+    };
+
+    let randomStr = '?v=' + Date.now()
+    var myRequest = new Request(url + randomStr);
+
+    fetch(myRequest).then((res) => {
       return res.text()
     }).then(data => {
       document.getElementById('tpl').innerHTML = data
@@ -47,7 +61,8 @@ function fetchDirectoryURL(url = '', baseHref = '') {
       $('#tpl tr').each(function (index, item) {
         // console.log(index, item)
         let id =  uuidv4()
-        let href = $(item).find('.display-name > a').attr('href')
+        let href = $(item).find('.display-name > a')
+            .attr('href').replace(randomStr, '')
         let hrefArr = href.split('/')
         let fileName = hrefArr[hrefArr.length - 1]
         let fileNameArr = fileName.split('.')
@@ -192,7 +207,7 @@ const Home = Vue.defineComponent({
         path: '/',
         query: {
           href: resolvePath(href, img.href),
-          v: Date.now()
+          // v: Date.now()
         }
       })
     },

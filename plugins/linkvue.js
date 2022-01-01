@@ -40,21 +40,28 @@ export function linkvue(pluginOptions) {
   return {
     name: 'vite-import-linkvue',
     config() {
+      return {}
     },
     async transform(code, id) {
-      let url = new URL(id);
-      let name = url.searchParams.get('name')
-      if (!url.pathname.endsWith('.linkvue')) return null
-      let files = await findFilesByName('if', {folder: "D:\\buyaosese"})
-      let data = {
-        files
+  //     let url = new URL(id);
+  //     let name = url.searchParams.get('name')
+  //     if (!url.pathname.endsWith('.linkvue')) return null
+  //     let files = await findFilesByName('if', {folder: "D:\\buyaosese"})
+  //     let data = {
+  //       files
+  //     }
+  //     let str = JSON5.stringify(data)
+  //
+  //     return `export default {
+  //   a: '${name}',
+  //   fun() {/*${str}*/}
+  // }`
+      console.log(id)
+      if (!id.endsWith('.linkvue')) return null
+      return {
+        code: `export default {}`,
+        map: null // 如果可行将提供 source map
       }
-      let str = JSON5.stringify(data)
-
-      return `export default {
-    a: '${name}',
-    fun() {/*${str}*/}
-  }`
     },
   }
 }

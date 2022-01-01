@@ -13,12 +13,7 @@ let str = qs.stringify({
   ssds: '111',
   name: 'sdsdsdsd'
 });
-// import('./sds.linkvue?' + str).then(res => {
-//   let m = res.default
-//   let str = getHereDoc(m.fun)
-//   let obj = JSON5.parse(str)
-//   // console.log(obj)
-// })
+
 
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

@@ -26,10 +26,14 @@
                                  :preview-src-list="bigImgList" lazy ></el-image>
                    </template>
                    <template v-else-if="img.fileExt === 'mp4'">
-                       <video style="max-width: 100%;"
-                              preload="none" muted playsinline  controls>
-                         <source :src="getImg(img.href)" type="video/mp4" />
-                       </video>
+<!--                       <video style="max-width: 100%;"-->
+<!--                              preload="none" muted playsinline  controls>-->
+<!--                         <source :src="getImg(img.href)" type="video/mp4" />-->
+<!--                       </video>-->
+                       <z-video style="max-width: 100%;"
+                       :src="getImg(img.href)"
+                       >
+                       </z-video>
                    </template>
                    <template v-else>
                        <el-link target="_blank" :href="getImg(img.href)"><span v-html="img.hrefDispay"></span></el-link>

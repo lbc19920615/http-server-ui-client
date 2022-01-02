@@ -2,6 +2,8 @@ import './index.css'
 import qs from 'qs'
 import JSON5 from 'json5';
 
+import ZVideo from "./compnents/ZVideo.vue";
+
 function getHereDoc(fn) {
   return fn.toString().match(/\/\*\s*([\s\S]*?)\s*\*\//m)[1];
 }
@@ -24,6 +26,7 @@ function uuidv4() {
     return v.toString(16);
   });
 }
+globalThis.uuidv4 = uuidv4
 
 function resolveHref(v, baseHref) {
   // let href = v.href
@@ -243,6 +246,7 @@ const router = VueRouter.createRouter({
 const App = {}
 const app = Vue.createApp(App);
 app.use(router)
+app.component(ZVideo.name, ZVideo)
 
 app.config.devtools = true
 

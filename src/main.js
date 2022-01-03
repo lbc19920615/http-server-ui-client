@@ -70,7 +70,7 @@ function fetchDirectoryURL(url = '', baseHref = '') {
         let fileName = hrefArr[hrefArr.length - 1]
         let fileNameArr = fileName.split('.')
         let fileNameNotExt = fileNameArr[0]
-        let fileExt = fileNameArr[1]
+        let fileExt = fileNameArr[fileNameArr.length - 1]
         let ret = {
           href,
           hrefDispay: decodeURIComponent(href),

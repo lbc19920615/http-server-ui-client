@@ -19,17 +19,19 @@
                <template v-if="img.fileExt">
                    <template v-if="checkMimeType(img.fileExt, 'image')">
 <!--                       <div><span v-html="img.hrefDispay"></span></div>-->
-                       <el-image :class="{'loaded': img.loaded}"  style="max-width: 100%; display: block; min-height: 200px;" :alt="img.hrefDispay"
+                       <el-image :class="{'loaded': img.loaded}"
+                                 style="max-width: 100%; display: block; min-height: 200px;"
+                                 :alt="img.hrefDispay"
                                  :src="getImg(img.href)"
                                  @load="onImageLoad(img, $event)"
 
-                                 :preview-src-list="bigImgList" lazy ></el-image>
+                                 :preview-src-list="bigImgList" lazy >
+                         <template #error="scope">
+                           {{ img.href }}
+                         </template>
+                       </el-image>
                    </template>
                    <template v-else-if="img.fileExt === 'mp4'">
-<!--                       <video style="max-width: 100%;"-->
-<!--                              preload="none" muted playsinline  controls>-->
-<!--                         <source :src="getImg(img.href)" type="video/mp4" />-->
-<!--                       </video>-->
                        <z-video style="max-width: 100%;"
                        :src="getImg(img.href)"
                        >

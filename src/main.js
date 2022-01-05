@@ -68,9 +68,17 @@ function fetchDirectoryURL(url = '', baseHref = '') {
             .attr('href').replace(randomStr, '')
         let hrefArr = href.split('/')
         let fileName = hrefArr[hrefArr.length - 1]
-        let fileNameArr = fileName.split('.')
-        let fileNameNotExt = fileNameArr[0]
-        let fileExt = fileNameArr[fileNameArr.length - 1]
+        let fileNameArr = fileName.split('/')
+        // console.log(fileNameArr)
+        let last = fileNameArr[fileNameArr.length - 1]
+        let lastArr = last.split('.')
+        let fileNameNotExt = lastArr.slice(0,lastArr.length - 1)
+        let fileExt = lastArr[lastArr.length - 1]
+        // console.log(fileNameNotExt)
+        // 隐藏文件不翻译
+        if (last && last.startsWith('.')) {
+          return;
+        }
         let ret = {
           href,
           hrefDispay: decodeURIComponent(href),

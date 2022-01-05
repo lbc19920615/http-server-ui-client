@@ -32,6 +32,7 @@
                        </el-image>
                    </template>
                    <template v-else-if="img.fileExt === 'mp4'">
+                       <div>{{img.href}}</div>
                        <z-video style="max-width: 100%;"
                        :src="getImg(img.href)"
                        >

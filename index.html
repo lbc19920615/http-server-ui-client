@@ -15,6 +15,10 @@
     </div>
     <template id="home-tpl">
        <div style="height: 90vh; overflow-y: auto;">
+           <el-button @click="utils_screenShot">视频封面</el-button>
+           <div>
+               <el-link class="back-link" type="primary" @click="goToLink({href: '..'})"><span>../</span></el-link>
+           </div>
            <div v-for="(img, index) in arr" :key="img.id" :col-id="img.id">
                <template v-if="img.fileExt">
                    <template v-if="checkMimeType(img.fileExt, 'image')">

@@ -170,10 +170,21 @@ globalThis.resolvePath = function () {
   return r;
 };
 
-
+let utilsMixin = {
+  methods: {
+    utils_screenShot() {
+      let { href = '' } = this.$router.currentRoute.value.query
+      console.log(href)
+      import(`./sds.linkvue?v=${Date.now()}&href=${href}`)
+    }
+  }
+}
 
 const Home = Vue.defineComponent({
   template: '#home-tpl',
+  mixins: [
+    utilsMixin
+  ],
   mounted() {
     let { href = '' } = this.$router.currentRoute.value.query
     this.setData({href})

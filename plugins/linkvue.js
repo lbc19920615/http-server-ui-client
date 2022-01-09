@@ -1,9 +1,11 @@
 import FindFiles from "node-find-files"
 
 import path from "path";
-import JSON5 from 'json5';
+// import JSON5 from 'json5';
 // import os from "os";
 // let root = (os.platform == "win32") ? process.cwd().split(path.sep)[0] : "/"
+
+import {screenShot} from "../core.mjs";
 
 // console.log(root)
 
@@ -35,6 +37,8 @@ function findFilesByName(name, {folder = ''} = {}) {
   })
 }
 
+const ROOT_PATH = 'F:\\色图'
+
 export function linkvue(pluginOptions) {
   let server
   return {
@@ -43,21 +47,12 @@ export function linkvue(pluginOptions) {
       return {}
     },
     async transform(code, id) {
-  //     let url = new URL(id);
-  //     let name = url.searchParams.get('name')
-  //     if (!url.pathname.endsWith('.linkvue')) return null
-  //     let files = await findFilesByName('if', {folder: "D:\\buyaosese"})
-  //     let data = {
-  //       files
-  //     }
-  //     let str = JSON5.stringify(data)
-  //
-  //     return `export default {
-  //   a: '${name}',
-  //   fun() {/*${str}*/}
-  // }`
-      console.log(id)
-      if (!id.endsWith('.linkvue')) return null
+      let url = new URL(id)
+      if (!url.pathname.endsWith('.linkvue')) return null
+      console.log(url)
+      let href = url.searchParams.get('href')
+
+      screenShot(path.join(ROOT_PATH, href))
       return {
         code: `export default {}`,
         map: null // 如果可行将提供 source map

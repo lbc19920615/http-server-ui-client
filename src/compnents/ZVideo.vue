@@ -45,19 +45,19 @@ export default {
       return src.replace('.mp4', '/frame_3.jpg')
     },
     onLoaded(e) {
-      console.dir(e)
+      // console.dir(e)
       // let videoElement = this.$el.querySelector('#' + this.videoID)
       let videoElement = e.target
       videoElement.currentTime = 1
       let url = window.URL.revokeObjectURL(videoElement.src);
       var duration = videoElement.duration; // 得到时长
-      console.log(duration)
+      // console.log(duration)
 
       let canvas = document.createElement("canvas");
       canvas.setAttribute("crossOrigin",'Anonymous')
       canvas.width = videoElement.videoWidth;
       canvas.height = videoElement.videoHeight;
-      console.log(videoElement.videoWidth)
+      // console.log(videoElement.videoWidth)
       canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
       // let img = new Image()//创建新的图片对象

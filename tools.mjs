@@ -2,16 +2,17 @@ import ffmpeg from 'ffmpeg'
 import fs from 'fs-extra'
 
 
-let folder = '/Users/tongguwei/Downloads/色图/twitter'
+let folder = 'F:\\色图\\twitter'
 let filePaths = fs.readdirSync(folder)
-let videoFiles = filePaths.filter(v => v.endsWith('.mp4'))
+let videoFiles = filePaths.filter(v => v.endsWith('.mp4')).filter(v => !v.startsWith('.'))
 
 console.log(videoFiles)
 
 videoFiles.forEach(videoPath => {
     let videoPathArr = videoPath.split('.')
     try {
-        let videoName = videoPathArr[0]
+        let videoName = videoPathArr.slice(0, videoPathArr.length - 1)
+
         var process = new ffmpeg(folder + `/${videoPath}`);
         process.then(function (video) {
             // Video metadata
@@ -38,5 +39,6 @@ videoFiles.forEach(videoPath => {
         console.log(e.code);
         console.log(e.msg);
     }
+
 })
 

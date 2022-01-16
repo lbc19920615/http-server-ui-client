@@ -1,4 +1,8 @@
+import {loadEnv} from 'vite'
 import FindFiles from "node-find-files"
+
+let config = loadEnv('development', process.cwd());
+console.log(config)
 
 import path from "path";
 // import JSON5 from 'json5';
@@ -37,7 +41,7 @@ function findFilesByName(name, {folder = ''} = {}) {
   })
 }
 
-const ROOT_PATH = 'F:\\色图'
+const ROOT_PATH = config.VITE_ROOT_PATH
 
 export function linkvue(pluginOptions) {
   let server

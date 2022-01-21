@@ -7,17 +7,19 @@ export function screenShot(folder) {
     let filePaths = fs.readdirSync(folder)
     let videoFiles = filePaths.filter(v => v.endsWith('.mp4'))
         .filter(v => !v.startsWith('.'))
-        .filter(v => {
-            let shotFolderName = path.basename(v, path.extname(v))
-            let shotFolderPath = path.join(folder, shotFolderName)
-            // let dirName = path.dirname(v)
-            let hasShotFolder = fs.pathExistsSync(shotFolderPath)
-            // console.log(v, shotFolderPath, hasShotFolder)
-            // let hasShottedFolder = fs.pathExists(path.join(v))
-            return !hasShotFolder
-        })
+        // .filter(v => {
+        //     let shotFolderName = path.basename(v, path.extname(v))
+        //     let shotFolderPath = path.join(folder, 'screen_shots', shotFolderName)
+        //     // let dirName = path.dirname(v)
+        //     let hasShotFolder = fs.pathExistsSync(shotFolderPath)
+        //     console.log(v, shotFolderPath, hasShotFolder)
+        //     // let hasShottedFolder = fs.pathExists(path.join(v))
+        //     return !hasShotFolder
+        // })
 
     console.log('current need resolve videoFiles', videoFiles)
+
+    fs.ensureDirSync(path.join(folder, 'screen_shots'))
 
     videoFiles.forEach(videoPath => {
         let videoPathArr = videoPath.split('.')
@@ -26,7 +28,7 @@ export function screenShot(folder) {
             let videoName = videoPathArr.slice(0, videoPathArr.length - 1).join('.')
 
             let importFilePath = path.join(folder, videoPath)
-            let exportFolderPath = path.join(folder, videoName)
+            let exportFolderPath = path.join(folder, 'screen_shots', videoName)
 
             // console.log(importFilePath, exportFolderPath)
 
@@ -40,7 +42,7 @@ export function screenShot(folder) {
 
                 video.fnExtractFrameToJPG(exportFolderPath , {
                     frame_rate : 1,
-                    number : 5,
+                    number : 9,
                     file_name : 'frame%i'
                 }, function (error, files) {
                     if (!error) {

@@ -42,23 +42,27 @@ export default {
   methods: {
     getPoster(src) {
       // console.log(src)
-      return src.replace('.mp4', '/frame_3.jpg')
+      let srcArr = src.split('/')
+      let srcLast = srcArr[srcArr.length - 1]
+      srcLast = srcLast.replace('.mp4', '/frame_3.jpg')
+      srcArr[srcArr.length - 1] = `screen_shots/${srcLast}`
+      return srcArr.join('/')
     },
     onLoaded(e) {
       // console.dir(e)
       // let videoElement = this.$el.querySelector('#' + this.videoID)
       let videoElement = e.target
       videoElement.currentTime = 1
-      let url = window.URL.revokeObjectURL(videoElement.src);
-      var duration = videoElement.duration; // 得到时长
+      // let url = window.URL.revokeObjectURL(videoElement.src);
+      // var duration = videoElement.duration; // 得到时长
       // console.log(duration)
 
-      let canvas = document.createElement("canvas");
-      canvas.setAttribute("crossOrigin",'Anonymous')
-      canvas.width = videoElement.videoWidth;
-      canvas.height = videoElement.videoHeight;
-      // console.log(videoElement.videoWidth)
-      canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      // let canvas = document.createElement("canvas");
+      // canvas.setAttribute("crossOrigin",'Anonymous')
+      // canvas.width = videoElement.videoWidth;
+      // canvas.height = videoElement.videoHeight;
+      // // console.log(videoElement.videoWidth)
+      // canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
       // let img = new Image()//创建新的图片对象
       // img.src = canvas.toDataURL("image/png");
@@ -67,7 +71,7 @@ export default {
       //   console.log('onload')
       // }
 
-      this.poster = canvas.toDataURL("image/png");
+      // this.poster = canvas.toDataURL("image/png");
       // console.log(this.poster)
     }
   }

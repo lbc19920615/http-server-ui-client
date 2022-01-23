@@ -4,6 +4,34 @@ import JSON5 from 'json5';
 
 import ZVideo from "./compnents/ZVideo.vue";
 
+// findElements takes a function definition, the output must be Truthy or Falsy
+function findElements( accept = x => customElements.get(x.localName) || 0) {
+  function log() {
+    console.log(`%c findElements `, `background:purple;color:yellow`, ...arguments);
+  }
+  let node, elements = [], shadowRootCount = 0;
+  function diveNode( diveRoot ) {
+    // IE9 was last to implement the TreeWalker/NodeIterator API ... in 2011
+    let iterator = document.createNodeIterator(
+        diveRoot,
+        NodeFilter.SHOW_ELEMENT,
+        node => accept(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+    );
+    while ( node = iterator.nextNode() ) {
+      if (node.shadowRoot) {
+        log(`dive into shadowRoot #${++shadowRootCount} at`, node.outerHTML);
+        [...node.shadowRoot.children].forEach( diveNode );
+      }
+      elements.push(node);
+    }
+  }
+  diveNode( document.body ); // initial dive location
+  log(elements.length, `elements found`,[elements]);
+  //return elements;
+}
+findElements((x) => true); // find all DOM elements
+findElements(); // find all Custom Elements
+
 function getHereDoc(fn) {
   return fn.toString().match(/\/\*\s*([\s\S]*?)\s*\*\//m)[1];
 }

@@ -30,7 +30,7 @@ function findElements( accept = x => customElements.get(x.localName) || 0) {
   //return elements;
 }
 findElements((x) => true); // find all DOM elements
-findElements(); // find all Custom Elements
+// findElements(); // find all Custom Elements
 
 function getHereDoc(fn) {
   return fn.toString().match(/\/\*\s*([\s\S]*?)\s*\*\//m)[1];
@@ -100,7 +100,7 @@ function fetchDirectoryURL(url = '', baseHref = '') {
         // console.log(fileNameArr)
         let last = fileNameArr[fileNameArr.length - 1]
         let lastArr = last.split('.')
-        let fileNameNotExt = lastArr.slice(0,lastArr.length - 1)
+        let fileNameNotExt = decodeURIComponent(lastArr.slice(0,lastArr.length - 1))
         let fileExt = lastArr[lastArr.length - 1]
         // console.log(fileNameNotExt)
         // 隐藏文件不翻译
@@ -129,10 +129,26 @@ function fetchDirectoryURL(url = '', baseHref = '') {
         reject(new Error('arr '))
       }
       resolveHref(arr[0], baseHref)
-      arr = arr.sort(function(a,b){
-        return a.fileNameNotExt-b.fileNameNotExt;
-      })
-      resolve(arr)
+
+      if (Number.isNaN(parseFloat(arr[0].fileNameNotExt))) {
+        arr = arr.sort(function(a,b){
+          let aarr = a.fileNameNotExt.split(' ')
+          let barr = b.fileNameNotExt.split(' ')
+
+          if (Array.isArray(aarr) && Array.isArray(barr)) {
+            return aarr[aarr.length - 1] - barr[barr.length - 1];
+          }
+          return a.fileNameNotExt-b.fileNameNotExt;
+        })
+        resolve(arr)
+      }
+      else {
+        arr = arr.sort(function(a,b){
+          console.log(a.fileNameNotExt, parseFloat(a.fileNameNotExt))
+          return a.fileNameNotExt-b.fileNameNotExt;
+        })
+        resolve(arr)
+      }
     })
   })
 }

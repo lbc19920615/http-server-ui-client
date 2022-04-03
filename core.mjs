@@ -7,15 +7,15 @@ export function screenShot(folder) {
     let filePaths = fs.readdirSync(folder)
     let videoFiles = filePaths.filter(v => v.endsWith('.mp4'))
         .filter(v => !v.startsWith('.'))
-        // .filter(v => {
-        //     let shotFolderName = path.basename(v, path.extname(v))
-        //     let shotFolderPath = path.join(folder, 'screen_shots', shotFolderName)
-        //     // let dirName = path.dirname(v)
-        //     let hasShotFolder = fs.pathExistsSync(shotFolderPath)
-        //     console.log(v, shotFolderPath, hasShotFolder)
-        //     // let hasShottedFolder = fs.pathExists(path.join(v))
-        //     return !hasShotFolder
-        // })
+        .filter(v => {
+            let shotFolderName = path.basename(v, path.extname(v))
+            let shotFolderPath = path.join(folder, 'screen_shots', shotFolderName)
+            // let dirName = path.dirname(v)
+            let hasShotFolder = fs.pathExistsSync(shotFolderPath)
+            console.log(v, shotFolderPath, hasShotFolder)
+            // let hasShottedFolder = fs.pathExists(path.join(v))
+            return !hasShotFolder
+        })
 
     console.log('current need resolve videoFiles', videoFiles)
 

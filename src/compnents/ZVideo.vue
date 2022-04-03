@@ -16,7 +16,7 @@
 <template>
   <div class="z-video">
     <video style="max-width: 100%;" :id="videoID"
-           preload="metadata" muted playsinline  controls
+           muted playsinline  controls
       :poster="getPoster(src)"
            @loadeddata="onLoaded"
     >
@@ -52,7 +52,7 @@ export default {
       // console.dir(e)
       // let videoElement = this.$el.querySelector('#' + this.videoID)
       let videoElement = e.target
-      videoElement.currentTime = 1
+      // videoElement.currentTime = 1
       // let url = window.URL.revokeObjectURL(videoElement.src);
       // var duration = videoElement.duration; // 得到时长
       // console.log(duration)

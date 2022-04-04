@@ -43,8 +43,8 @@
   //.icon-ff--standard:before { content: "\23E9\FE0E" }
 }
 .z-video__poster > img {
-  width: 100%;
   display: block;
+  height: 100%;
 }
 </style>
 

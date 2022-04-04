@@ -12,7 +12,7 @@ export function screenShot(folder) {
             let shotFolderPath = path.join(folder, 'screen_shots', shotFolderName)
             // let dirName = path.dirname(v)
             let hasShotFolder = fs.pathExistsSync(shotFolderPath)
-            console.log(v, shotFolderPath, hasShotFolder)
+            // console.log(v, shotFolderPath, hasShotFolder)
             // let hasShottedFolder = fs.pathExists(path.join(v))
             return !hasShotFolder
         })
@@ -24,22 +24,19 @@ export function screenShot(folder) {
     videoFiles.forEach(videoPath => {
         let videoPathArr = videoPath.split('.')
         try {
-            // let videoExt = videoPathArr[videoPathArr.length - 1]
             let videoName = videoPathArr.slice(0, videoPathArr.length - 1).join('.')
 
             let importFilePath = path.join(folder, videoPath)
             let exportFolderPath = path.join(folder, 'screen_shots', videoName)
 
-            // console.log(importFilePath, exportFolderPath)
+
+            let status = fs.statSync(importFilePath)
+            // console.log(status)
+            fs.outputFileSync(path.join(exportFolderPath, 'status.js'),
+                `module.exports =  ${JSON.stringify(status)}`)
 
             var process = new ffmpeg(importFilePath);
             process.then(function (video) {
-                // Video metadata
-                // console.log(video.metadata);
-                // FFmpeg configuration
-                // console.log(video.info_configuration);
-
-
                 video.fnExtractFrameToJPG(exportFolderPath , {
                     frame_rate : 1,
                     number : 9,
@@ -51,7 +48,6 @@ export function screenShot(folder) {
                     }else {
                         console.log(error)
                     }
-
                 });
             }, function (err) {
                 console.log('Error: ' + err);

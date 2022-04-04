@@ -1,6 +1,17 @@
-<style>
+<style lang="scss">
 .z-video {
   position: relative;
+  video {
+    opacity: 0;
+  }
+  &--playing {
+    .z-video__poster {
+      display: none;
+    }
+    video {
+      opacity: 1;
+    }
+  }
 }
 .z-video__poster {
   position: absolute;
@@ -9,20 +20,52 @@
   width: 100%;
   display: block;
   height: 100%;
-  pointer-events: none;
+
+  //background-color: #3a8ee6;
+  .icon-ff {
+    width: 36px;
+    height: 36px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+    pointer-events: none;
+    background-color: #3a8ee6;
+    //line-height: 1;
+    z-index: 111;
+    text-align: center;
+    border-radius: 50%;
+    color: #ffffff;
+    line-height: 36px;
+  }
+  //.icon-ff:before { content: "\23F5" }
+  //.icon-ff--standard:before { content: "\23E9\FE0E" }
+}
+.z-video__poster > img {
+  width: 100%;
+  display: block;
 }
 </style>
 
 <template>
-  <div class="z-video">
+  <div class="z-video" :class="['z-video--' + (isPLaying ? 'playing' : '')]">
     <video style="max-width: 100%;" :id="videoID"
            muted playsinline  controls
-      :poster="getPoster(src)"
-           @loadeddata="onLoaded"
+           preload="none"
+           :poster="getPoster(src)"
     >
       <source :src="src" type="video/mp4" />
     </video>
-<!--    <img class="z-video__poster" crossorigin="anonymous" :src="getPoster(src)" alt="">-->
+    <div  class="z-video__poster">
+      <img
+          @load="onImgLoad"
+          @click="play"
+          crossorigin="anonymous"
+          loading="lazy"
+          :src="getPoster(src)" alt="">
+      <div class="fa fa-play icon-ff"></div>
+    </div>
   </div>
 </template>
 
@@ -35,11 +78,16 @@ export default {
   data() {
     return {
       metas: new Map(),
+      showed: false,
+      isPLaying: false,
       poster: '',
       videoID: 'z' + uuidv4(),
     }
   },
   methods: {
+    onImgLoad() {
+      this.showed = true
+    },
     getPoster(src) {
       // console.log(src)
       let srcArr = src.split('/')
@@ -48,31 +96,13 @@ export default {
       srcArr[srcArr.length - 1] = `screen_shots/${srcLast}`
       return srcArr.join('/')
     },
-    onLoaded(e) {
-      // console.dir(e)
-      // let videoElement = this.$el.querySelector('#' + this.videoID)
-      let videoElement = e.target
-      // videoElement.currentTime = 1
-      // let url = window.URL.revokeObjectURL(videoElement.src);
-      // var duration = videoElement.duration; // 得到时长
-      // console.log(duration)
-
-      // let canvas = document.createElement("canvas");
-      // canvas.setAttribute("crossOrigin",'Anonymous')
-      // canvas.width = videoElement.videoWidth;
-      // canvas.height = videoElement.videoHeight;
-      // // console.log(videoElement.videoWidth)
-      // canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-
-      // let img = new Image()//创建新的图片对象
-      // img.src = canvas.toDataURL("image/png");
-      // img.setAttribute("crossOrigin",'Anonymous')
-      // img.onload = function () {
-      //   console.log('onload')
-      // }
-
-      // this.poster = canvas.toDataURL("image/png");
-      // console.log(this.poster)
+    play(e) {
+      console.log('play', e)
+      this.isPLaying = true
+      let v = document.getElementById(this.videoID)
+      if (v) {
+        v.play();
+      }
     }
   }
 }

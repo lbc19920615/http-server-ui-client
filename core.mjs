@@ -1,38 +1,39 @@
 import ffmpeg from 'ffmpeg'
 import fs from 'fs-extra'
-import path from 'path'
+import Path from 'path'
 
 
 export function screenShot(folder) {
+    // console.log(folder)
     let filePaths = fs.readdirSync(folder)
     let videoFiles = filePaths.filter(v => v.endsWith('.mp4'))
         .filter(v => !v.startsWith('.'))
         .filter(v => {
-            let shotFolderName = path.basename(v, path.extname(v))
-            let shotFolderPath = path.join(folder, 'screen_shots', shotFolderName)
+            let shotFolderName = Path.basename(v, Path.extname(v))
+            let shotFolderPath = Path.join(folder, 'screen_shots', shotFolderName)
             // let dirName = path.dirname(v)
             let hasShotFolder = fs.pathExistsSync(shotFolderPath)
             // console.log(v, shotFolderPath, hasShotFolder)
-            // let hasShottedFolder = fs.pathExists(path.join(v))
+            // let hasShottedFolder = fs.pathExists(Path.join(v))
             return !hasShotFolder
         })
 
     console.log('current need resolve videoFiles', videoFiles)
 
-    fs.ensureDirSync(path.join(folder, 'screen_shots'))
+    fs.ensureDirSync(Path.join(folder, 'screen_shots'))
 
     videoFiles.forEach(videoPath => {
         let videoPathArr = videoPath.split('.')
         try {
             let videoName = videoPathArr.slice(0, videoPathArr.length - 1).join('.')
 
-            let importFilePath = path.join(folder, videoPath)
-            let exportFolderPath = path.join(folder, 'screen_shots', videoName)
+            let importFilePath = Path.join(folder, videoPath)
+            let exportFolderPath = Path.join(folder, 'screen_shots', videoName)
 
 
             let status = fs.statSync(importFilePath)
             // console.log(status)
-            fs.outputFileSync(path.join(exportFolderPath, 'status.js'),
+            fs.outputFileSync(Path.join(exportFolderPath, 'status.js'),
                 `module.exports =  ${JSON.stringify(status)}`)
 
             var process = new ffmpeg(importFilePath);

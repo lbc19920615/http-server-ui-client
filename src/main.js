@@ -1,8 +1,22 @@
 import './index.css'
-import qs from 'qs'
-import JSON5 from 'json5';
+// import qs from 'qs'
+// import JSON5 from 'json5';
 
 import ZVideo from "./compnents/ZVideo.vue";
+
+function parseParms(str) {
+  var pieces = str.split("&"), data = {}, i, parts;
+  // process each query pair
+  for (i = 0; i < pieces.length; i++) {
+    parts = pieces[i].split("=");
+    if (parts.length < 2) {
+      parts.push("");
+    }
+    data[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+  }
+  return data;
+}
+
 
 // findElements takes a function definition, the output must be Truthy or Falsy
 function findElements( accept = x => customElements.get(x.localName) || 0) {
@@ -29,7 +43,7 @@ function findElements( accept = x => customElements.get(x.localName) || 0) {
   log(elements.length, `elements found`,[elements]);
   //return elements;
 }
-findElements((x) => true); // find all DOM elements
+// findElements((x) => true); // find all DOM elements
 // findElements(); // find all Custom Elements
 
 function getHereDoc(fn) {
@@ -42,10 +56,10 @@ let globalURL = new  URL('https://www.baidu.com' + hashQuery)
 let globalSearchParams = globalURL.searchParams
 let globalHREF = globalSearchParams.get('href')
 
-let str = qs.stringify({
-  ssds: '111',
-  name: 'sdsdsdsd'
-});
+// let str = qs.stringify({
+//   ssds: '111',
+//   name: 'sdsdsdsd'
+// });
 
 
 function uuidv4() {
@@ -94,7 +108,9 @@ function fetchDirectoryURL(url = '', baseHref = '') {
         let id =  uuidv4()
         let href = $(item).find('.display-name > a')
             .attr('href').replace(randomStr, '')
+        href = href.slice(1)
         let hrefArr = href.split('/')
+        // console.log(href)
         let fileName = hrefArr[hrefArr.length - 1]
         let fileNameArr = fileName.split('/')
         // console.log(fileNameArr)
@@ -144,7 +160,7 @@ function fetchDirectoryURL(url = '', baseHref = '') {
       }
       else {
         arr = arr.sort(function(a,b){
-          console.log(a.fileNameNotExt, parseFloat(a.fileNameNotExt))
+          // console.log(a.fileNameNotExt, parseFloat(a.fileNameNotExt))
           return a.fileNameNotExt-b.fileNameNotExt;
         })
         resolve(arr)
@@ -218,7 +234,7 @@ let utilsMixin = {
   methods: {
     utils_screenShot() {
       let { href = '' } = this.$router.currentRoute.value.query
-      console.log(href)
+      // console.log(href)
       import(`./sds.linkvue?v=${Date.now()}&href=${href}`)
     }
   }
@@ -256,7 +272,12 @@ const Home = Vue.defineComponent({
   },
   methods: {
     getImg(v) {
-      return SEVER_ORIGIN + v
+      let u = location.hash.slice(3);
+      let obj = parseParms(u);
+      // console.log(obj)
+      if (!obj.href) {
+      }
+      return SEVER_ORIGIN + (obj.href ?? '/') + v.slice(1)
     },
     async setData(link) {
 
@@ -266,14 +287,36 @@ const Home = Vue.defineComponent({
       // console.log(data)
       this.arr = data
     },
-    goToLink(img) {
-      let { href = '' } = this.$router.currentRoute.value.query
-      // console.log(img.href)
+    backLink() {
+      let u = location.hash.slice(3)
+      let obj = parseParms(u);
+      let arr = obj.href.split('/')
+      arr.splice(arr.length - 1 , 1)
+      arr.splice(arr.length - 1 , 1)
+      console.log(arr.slice(1))
+      let href = arr.slice(1).join('/')
+      if (href) {
+        href = href + '/'
+      }
       this.$router.push({
         path: '/',
         query: {
-          href: resolvePath(href, img.href),
-          // v: Date.now()
+          href: '/' + href
+        }
+      })
+    },
+    goToLink(img) {
+      let { href = '' } = this.$router.currentRoute.value.query
+      let u = location.hash.slice(3) + encodeURIComponent( img.href.slice(1));
+
+      let obj = parseParms(u);
+      console.log(img.href, obj)
+      this.$router.push({
+        path: '/',
+        query: {
+          // href: resolvePath(href, img.href),
+          href: obj.href ?? img.href
+          // v: Date.now()11
         }
       })
     },

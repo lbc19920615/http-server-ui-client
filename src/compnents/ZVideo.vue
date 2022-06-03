@@ -92,8 +92,10 @@ export default {
       // console.log(src)
       let srcArr = src.split('/')
       let srcLast = srcArr[srcArr.length - 1]
-      srcLast = srcLast.replace('.mp4', '/frame_3.jpg')
-      srcArr[srcArr.length - 1] = `screen_shots/${srcLast}`
+      srcLast = srcLast.replace('.mp4', '/frame_3.jpg');
+      // let urlObj = new URL(srcLast)
+      // console.log(srcLast)
+      srcArr[srcArr.length - 1] = `/screen_shots/${srcLast}`
       return srcArr.join('/')
     },
     play(e) {

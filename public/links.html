@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body {
+            margin: 0;
+        }
+        img {
+            max-width: 90vw;
+        }
+        .part {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+<script src="/Vue.js"></script>
+<script type="module">
+    console.log(Vue)
+
+
+    const App = {
+        template: `
+            <f-card></f-card>
+        `
+    }
+    const app = Vue.createApp(App);
+
+    app.component('f-card', {
+        template: `
+        <div class="part">
+    <a href="https://www.pixiv.net/artworks/101099886" target="_blank">
+        <img src="links/101099886_p0_master1200.jpg">
+    </a>
+</div>
+        `
+    })
+
+    app.mount("#app");
+</script>
+</body>
+
+</html>

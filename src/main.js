@@ -18,6 +18,18 @@ function parseParms(str) {
 }
 
 
+/**
+ * 处理pixiv 名字
+ * @param {*} a 
+ * @param {*} b 
+ */
+function resolvePixivName(a, b) {
+  let aarr = a.fileNameNotExt.split('_');
+  let barr = b.fileNameNotExt.split('_');
+  console.log(aarr[1], barr[1] );
+  return parseFloat(aarr[1].replace('p', '')) - parseFloat(barr[1].replace('p', ''));
+}
+
 // findElements takes a function definition, the output must be Truthy or Falsy
 function findElements( accept = x => customElements.get(x.localName) || 0) {
   function log() {
@@ -60,6 +72,10 @@ let globalHREF = globalSearchParams.get('href')
 //   ssds: '111',
 //   name: 'sdsdsdsd'
 // });
+
+window.jumpToItem = function (index) {
+  document.querySelector(`[data-index="${index}"]`).scrollIntoView()
+}
 
 
 function uuidv4() {
@@ -160,7 +176,11 @@ function fetchDirectoryURL(url = '', baseHref = '') {
       }
       else {
         arr = arr.sort(function(a,b){
-          // console.log(a.fileNameNotExt, parseFloat(a.fileNameNotExt))
+          console.log(a.fileNameNotExt, parseFloat(a.fileNameNotExt))
+          if (a.fileNameNotExt.includes('_master')) {
+            return resolvePixivName(a, b);
+          }
+
           return a.fileNameNotExt-b.fileNameNotExt;
         })
         resolve(arr)
@@ -236,6 +256,12 @@ let utilsMixin = {
       let { href = '' } = this.$router.currentRoute.value.query
       // console.log(href)
       import(`./sds.linkvue?v=${Date.now()}&href=${href}`)
+    },
+    utils_jumpTo() {
+      window.jumpToItem(this.num)
+    },
+    utils_appendNum(v = 10) {
+      this.num = this.num + v
     }
   }
 }
@@ -254,11 +280,13 @@ const Home = Vue.defineComponent({
   beforeRouteUpdate (to, from) {
     if (this.inited) {
       let { href = '' } = to.query
+      this.num = 0
       this.setData({href})
     }
   },
   data() {
     return {
+      num: 0,
       inited: false,
       arr: [],
     };

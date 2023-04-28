@@ -48,8 +48,8 @@
     <template id="home-tpl">
       <div>
           <div class="tool">
-              <el-button size="small" @click="utils_screenShot">视频封面</el-button>
-<!--              <el-button size="small" @click="utils_appendNum(-20)">-20</el-button>-->
+              <!-- <el-button size="small" @click="utils_screenShot">视频封面</el-button> -->
+             <el-button size="small" @click="utils_appendNum(-1)">-1</el-button>
               <el-input-number  size="small" v-model="num" :min="0" :step="20"></el-input-number>
               <el-button size="small" @click="utils_appendNum(1)">1</el-button>
               <el-button size="small"  @click="utils_jumpTo">跳转</el-button>

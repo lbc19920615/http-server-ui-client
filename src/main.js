@@ -98,6 +98,14 @@ function resolveHref(v, baseHref) {
   v.hrefDispay =  decodeURIComponent(v.href)
 }
 
+function getDateFromlastModified(lastModified = '') {
+  
+  let arr = lastModified.split(' ');
+  let yearMonthDay = arr[0].split('-').map(v => parseInt(v))
+  // console.log(arr, yearMonthDay)
+  return window.dayjs(`${yearMonthDay[2]}-${yearMonthDay[1]}-${yearMonthDay[0]} ${arr[1]}`);
+}
+
 function fetchDirectoryURL(url = '', baseHref = '') {
   return new Promise((resolve, reject) => {
     console.log(url)
@@ -123,7 +131,15 @@ function fetchDirectoryURL(url = '', baseHref = '') {
         // console.log(index, item)
         let id =  uuidv4()
         let href = $(item).find('.display-name > a')
-            .attr('href').replace(randomStr, '')
+            .attr('href').replace(randomStr, '');
+        let lastModified = $(item).find('.last-modified').html();
+        // console.log(lastModified)
+
+        let lastModifiedDate = getDateFromlastModified(lastModified);
+
+        // console.log(href, lastModified, lastModifiedDate)
+        
+
         href = href.slice(1)
         let hrefArr = href.split('/')
         // console.log(href)
@@ -145,6 +161,8 @@ function fetchDirectoryURL(url = '', baseHref = '') {
           loaded: false,
           fileNameNotExt,
           fileExt,
+          dateObj: lastModifiedDate,
+          date: lastModifiedDate.toISOString(),
           id,
         }
         // console.log(ret)
@@ -266,10 +284,29 @@ let utilsMixin = {
   }
 }
 
+let searchMixin = {
+  data() {
+    return {
+      searchContion: {
+      
+      }
+    }
+  },
+  beforeMount() {
+    this.resetSearchContion(); 
+  },
+  methods: {
+    resetSearchContion() {
+      this.searchContion.reverse =  false
+    }
+  }
+}
+
 const Home = Vue.defineComponent({
   template: '#home-tpl',
   mixins: [
-    utilsMixin
+    utilsMixin,
+    searchMixin
   ],
   mounted() {
     let { href = '' } = this.$router.currentRoute.value.query
@@ -279,10 +316,22 @@ const Home = Vue.defineComponent({
   },
   beforeRouteUpdate (to, from) {
     if (this.inited) {
-      let { href = '' } = to.query
-      this.num = 0
+      let { href = '' } = to.query;
+      let fromhref = from.query.href
+      this.num = 0;
+      this.resetSearchContion();
+      window.globalSearchParams = new URLSearchParams(`?href=${href}`);
+      // console.log(fromhref)
+      window.lastGlobalSearchParams = new URLSearchParams(`?href=${fromhref}`);
       this.setData({href})
     }
+  },
+  beforeRouteEnter() {
+    window.globalSearchParams = new URLSearchParams(location.hash.replace('#/?', ''));
+    // console.log(globalSearchParams.get('href'))
+  },
+  beforeRouteLeave() {
+   
   },
   data() {
     return {
@@ -296,6 +345,21 @@ const Home = Vue.defineComponent({
       return this.arr.map(v => {
         return this.getImg(v.href)
       })
+    },
+    sortArr() {
+
+      if (Array.isArray(this.arr)) {
+        if (this.searchContion) {
+          if (this.searchContion.reverse) {
+            console.log(this.searchContion.reverse);
+            return [...this.arr].sort((a, b) => {
+              return b.dateObj - a.dateObj;
+            })
+          }
+        }
+        return [...this.arr]
+      }
+      return []
     }
   },
   methods: {
@@ -332,6 +396,9 @@ const Home = Vue.defineComponent({
           href: '/' + href
         }
       })
+    },
+    goBackHistry() {
+      this.$router.back()
     },
     goToLink(img) {
       let { href = '' } = this.$router.currentRoute.value.query

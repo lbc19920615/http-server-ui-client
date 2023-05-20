@@ -7,6 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
     <link rel="stylesheet" href="element-plus.css" />
+    <script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.7/dayjs.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
 <!--    <script>-->
 <!--        window.onload=function () {-->
@@ -34,8 +35,19 @@
             margin-top: 30px;
         }
         .tool {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            align-items: center;
+        }
+        .row {
             display: flex;
             gap: 10px;
+            align-items: center;
+        }
+        @media screen and (max-width: 720px) {
+            .tool { 
+                grid-template-columns: 1fr ;
+            }
         }
     </style>
 
@@ -49,10 +61,16 @@
       <div>
           <div class="tool">
               <!-- <el-button size="small" @click="utils_screenShot">视频封面</el-button> -->
-             <el-button size="small" @click="utils_appendNum(-1)">-1</el-button>
-              <el-input-number  size="small" v-model="num" :min="0" :step="20"></el-input-number>
-              <el-button size="small" @click="utils_appendNum(1)">1</el-button>
-              <el-button size="small"  @click="utils_jumpTo">跳转</el-button>
+              <div class="row">
+                <el-button size="small" @click="utils_appendNum(-1)">-1</el-button>
+                <el-input-number  size="small" v-model="num" :min="0" :step="20"></el-input-number>
+                <el-button size="small" @click="utils_appendNum(1)">1</el-button>
+                <div size="small"  @click="utils_jumpTo">跳转</div>
+              </div>
+                <div class="row"> 
+                    <div><span>倒序</span> <el-switch v-model="searchContion.reverse" /></div>
+                    <div @click="goBackHistry()">返回</div>
+                </div>
           </div>
           <div id="con" class="con" style="height: 80vh; overflow-y: auto;">
 
@@ -60,10 +78,11 @@
               <div>
                   <el-link class="back-link" type="primary" @click="backLink({href: '.../'})"><span>../</span></el-link>
               </div>
-              <div v-for="(img, index) in arr" :key="img.id" :data-index="index" :col-id="img.id">
+              <div v-for="(img, index) in sortArr" :key="img.id" :data-index="index" :col-id="img.id">
                   <template v-if="img.fileExt">
                       <template v-if="checkMimeType(img.fileExt, 'image')">
                           <!--                       <div><span v-html="img.hrefDispay"></span></div>-->
+                          <div style="margin-left: 10px;">{{img.date}}</div>
                           <el-image :class="{'loaded': img.loaded}"
                                     style="max-width: 100%; display: block; min-height: 200px;"
                                     :alt="img.hrefDispay"
@@ -72,12 +91,12 @@
 
                                     :preview-src-list="bigImgList" lazy >
                               <template #error="scope">
-                                  {{ img.href }}
+                                  {{ img.href }} 
                               </template>
                           </el-image>
                       </template>
                       <template v-else-if="img.fileExt === 'mp4'">
-                          <div>{{img.href}}</div>
+                          <div>{{img.href}} <span style="margin-left: 10px;">{{img.date}}</span></div>
                           <z-video style="max-width: 100%;"
                                    :src="getImg(img.href)"
                           >
@@ -90,7 +109,8 @@
                   </template>
                   <template v-else>
                       <div :class="{'back-link': img.hrefDispay === '..'}">
-                          <el-link type="primary" @click="goToLink(img)"><span v-html="img.hrefDispay"></span></el-link>
+                          <el-link type="primary" @click="goToLink(img)"><span v-html="img.hrefDispay"></span> 
+                            </el-link>
                       </div>
                   </template>
               </div>

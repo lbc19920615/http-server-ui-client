@@ -268,6 +268,19 @@ globalThis.resolvePath = function () {
   return r;
 };
 
+const elementIsVisibleInViewport = (el, partiallyVisible = false) => {
+  const { top, left, bottom, right } = el.getBoundingClientRect();
+  const { innerHeight, innerWidth } = window;
+  // console.log(top, bottom, el);
+  return  top > 0 && bottom < 900;
+  // return  top >= 0 && left >= 0 && bottom <= innerHeight && right <= innerWidth;
+  // return partiallyVisible
+  //   ? ((top > 0 && top < innerHeight) ||
+  //       (bottom > 0 && bottom < innerHeight)) &&
+  //       ((left > 0 && left < innerWidth) || (right > 0 && right < innerWidth))
+  //   : top >= 0 && left >= 0 && bottom <= innerHeight && right <= innerWidth;
+};
+
 let utilsMixin = {
   methods: {
     utils_screenShot() {
@@ -368,7 +381,7 @@ const Home = Vue.defineComponent({
       return location.href.includes('demo') ? 'demo' : ''
     },
     arrLen() {
-      // console.log('arrLen', this.arr.length)
+    
       if (Array.isArray(this.arr)) {
         return this.arr.length
       }
@@ -450,11 +463,42 @@ const Home = Vue.defineComponent({
     },
     onImageOpen() {
       
-      this.obj.curIndex = 0
+      // this.obj.curIndex = 0
+      window.setCurIndex ()
     },
     onImageSwitch(index) {
       // console.log('onImageSwitch', index)
       this.obj.curIndex = index
+    },
+    onListScroll() {
+      let self = this;
+      if (!window.globalItems) {
+        window.globalItems = [...document.querySelectorAll('.list-item')];
+
+        window.getSet = function() {
+          return  window.globalItems.map(v => elementIsVisibleInViewport(v, true))
+        }
+
+        window.setCurIndex = function() {
+          globalItems.every((v, index) => {
+            let isVisible = elementIsVisibleInViewport(v, true)
+            if ( isVisible) {
+              // console.log(v)
+              self.obj.curIndex = index;
+              return false
+            }
+            return true
+          })
+        }
+      }
+
+      window.setCurIndex()
+    
+      // let index = indexes.indexOf(true)
+      // // console.log('onListScroll', index)
+      // if (index > -1) {
+      //   this.obj.curIndex = index
+      // }
     }
   }
 });

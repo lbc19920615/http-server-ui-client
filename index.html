@@ -85,25 +85,33 @@
                     <el-button size="small" @click="newSite(searchContion.site)">抖音</el-button>
                </div> 
           </div>
-          <div id="con" class="con" style="height: 80vh; overflow-y: auto;">
+          
+          <div>
+            <el-link class="back-link" type="primary" @click="backLink({href: '.../'})"><span>../</span></el-link>
+        </div>
+          <div id="con" class="con" style="height: 80vh; overflow-y: auto;"
+                @scroll="onListScroll"
+          >
 
 
-              <div>
-                  <el-link class="back-link" type="primary" @click="backLink({href: '.../'})"><span>../</span></el-link>
-              </div>
-              <div v-for="(img, index) in sortArr" :key="img.id" :data-index="index" :col-id="img.id">
+              <div v-for="(img, index) in sortArr" :key="img.id" 
+                class="list-item"
+              :data-index="index" :col-id="img.id">
                   <template v-if="img.fileExt">
                       <template v-if="checkMimeType(img.fileExt, 'image')">
                           <!--                       <div><span v-html="img.hrefDispay"></span></div>-->
                           <div style="margin-left: 10px;">{{img.date}}</div>
-                          <el-image :class="{'loaded': img.loaded}"
+                          <el-image 
+                          :class="{'loaded': img.loaded}"
                                     style="max-width: 100%; display: block; min-height: 200px;"
                                     :alt="img.hrefDispay"
                                     :src="getImg(img.href)"
                                     @load="onImageLoad(img, $event)"
                                     @close="onImageOpen"
                                     @switch="onImageSwitch"
-                                    :preview-src-list="bigImgList" lazy >
+                                    :preview-src-list="bigImgList"  
+                                    :initial-index="obj.curIndex"
+                                    >
                               <template #error="scope">
                                   {{ img.href }}
                               </template>

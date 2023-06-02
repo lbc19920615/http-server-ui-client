@@ -73,22 +73,24 @@
                 <el-input-number  size="small" v-model="num" :min="0" :step="20"></el-input-number>
                 <el-button size="small" @click="utils_appendNum(1)">1</el-button>
                 <div size="small"  @click="utils_jumpTo">跳转</div>
+                          
+          <div>
+            <el-link class="back-link" type="primary" @click="backLink({href: '.../'})"><span>../</span></el-link>
+        </div>
               </div>
                 <div class="row"> 
                     <div><span>倒序</span> <el-switch v-model="searchContion.reverse" /></div>
                     <div @click="goBackHistry()">返回</div> 
                     <div >{{ arrLen }}</div>
                     <div>{{obj.curIndex}}</div>
+                    
                 </div>
                <div class="row mobile-hide">
                     <el-input size="small" v-model="searchContion.site" placeholder=""></el-input>
                     <el-button size="small" @click="newSite(searchContion.site)">抖音</el-button>
                </div> 
           </div>
-          
-          <div>
-            <el-link class="back-link" type="primary" @click="backLink({href: '.../'})"><span>../</span></el-link>
-        </div>
+
           <div id="con" class="con" style="height: 80vh; overflow-y: auto;"
                 @scroll="onListScroll"
           >

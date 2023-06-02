@@ -268,11 +268,14 @@ globalThis.resolvePath = function () {
   return r;
 };
 
-const elementIsVisibleInViewport = (el, partiallyVisible = false) => {
-  const { top, left, bottom, right } = el.getBoundingClientRect();
+const elementIsVisibleInViewport = (el, client) => {
+  let clientHeight = client.height;
+
+  const { top, left, bottom, right, height } = el.getBoundingClientRect();
   const { innerHeight, innerWidth } = window;
   // console.log(top, bottom, el);
-  return  top > 0 && bottom < 900;
+  return clientHeight / (top + height)  > 0.5
+  // return  top > 0 && bottom < client.bottom;
   // return  top >= 0 && left >= 0 && bottom <= innerHeight && right <= innerWidth;
   // return partiallyVisible
   //   ? ((top > 0 && top < innerHeight) ||
@@ -326,6 +329,7 @@ const Home = Vue.defineComponent({
     let { href = '' } = this.$router.currentRoute.value.query
     this.setData({href})
     this.obj.inited =  true
+    this.obj.curIndex = 0;
     // console.log('mounted')
   },
   beforeRouteUpdate (to, from) {
@@ -333,6 +337,8 @@ const Home = Vue.defineComponent({
       let { href = '' } = to.query;
       let fromhref = from.query.href
       this.num = 0;
+      document.getElementById('con').scrollTop = 0
+      window.globalItems = false;
       this.resetSearchContion();
       window.globalSearchParams = new URLSearchParams(`?href=${href}`);
       // console.log(fromhref)
@@ -417,7 +423,7 @@ const Home = Vue.defineComponent({
       let arr = obj.href.split('/')
       arr.splice(arr.length - 1 , 1)
       arr.splice(arr.length - 1 , 1)
-      console.log(arr.slice(1))
+      // console.log(arr.slice(1))
       let href = arr.slice(1).join('/')
       if (href) {
         href = href + '/'
@@ -481,7 +487,7 @@ const Home = Vue.defineComponent({
 
         window.setCurIndex = function() {
           globalItems.every((v, index) => {
-            let isVisible = elementIsVisibleInViewport(v, true)
+            let isVisible = elementIsVisibleInViewport(v, document.getElementById('con').getBoundingClientRect())
             if ( isVisible) {
               // console.log(v)
               self.obj.curIndex = index;

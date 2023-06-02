@@ -1,0 +1,74 @@
+    <button id="button">hover 打开悬浮层</button>
+<div id="pop" popover="manual">我是 hover 悬浮层</div>
+
+<script>
+  let pop = document.getElementById('pop');
+  let button = document.getElementById('button');
+
+  /**
+  * 创建一个基于原生popover API的hover
+  */
+  function createHoverPopover(popEle, buttonEle) {
+      const HIDE_CLS = 'popover-hiding';
+
+      function forceClearState() {
+          setTimeout(() => {
+            popEle.classList.remove(HIDE_CLS);
+          }, 30)
+      }
+
+      popEle.onanimationend = (event) => {
+        if (popEle.classList.contains(HIDE_CLS)) {
+          popEle.hidePopover();
+          popEle.classList.remove(HIDE_CLS);
+          forceClearState();
+        }
+      };
+      buttonEle.addEventListener('mouseenter', () => {
+        if (!popEle.classList.contains(HIDE_CLS)) {
+          popEle.showPopover();
+        }
+      })
+      buttonEle.addEventListener('mouseleave', () => {
+        if (!popEle.classList.contains(HIDE_CLS)) {
+          popEle.classList.add(HIDE_CLS);
+        } else {
+          forceClearState();
+        }
+      })
+  }
+
+  createHoverPopover(pop, button);
+</script>
+
+<style>
+    @keyframes fadeIn {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+      }
+      
+      @keyframes fadeOut {
+        0% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+
+#pop:popover-open{
+  background-color:var(--el-color-primary-light-1);
+  border: transparent;
+  opacity: 1;
+  padding: 10px;
+  
+  animation-name: fadeIn;
+  animation-duration: .6s;
+
+  position: absolute;
+  left: 30px;
+  top: 60px;
+  margin: 0;
+}
+
+#pop:popover-open.popover-hiding {
+    animation-name: fadeOut;
+        animation-duration: .6s;
+}
+</style>

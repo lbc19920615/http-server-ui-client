@@ -53,6 +53,10 @@
 
 </head>
 <body>
+    <!-- {{> popover }} -->
+
+
+
    <div id="tpl" style="display: none"></div>
     <div id="app">
         <router-view></router-view>
@@ -71,6 +75,10 @@
                     <div><span>倒序</span> <el-switch v-model="searchContion.reverse" /></div>
                     <div @click="goBackHistry()">返回</div>
                 </div>
+               <div class="row">
+                    <el-input size="small" v-model="searchContion.site" placeholder=""></el-input>
+                    <el-button size="small" @click="newSite(searchContion.site)">抖音</el-button>
+               </div> 
           </div>
           <div id="con" class="con" style="height: 80vh; overflow-y: auto;">
 

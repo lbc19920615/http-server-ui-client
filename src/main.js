@@ -298,6 +298,7 @@ let searchMixin = {
   methods: {
     resetSearchContion() {
       this.searchContion.reverse =  false
+      this.searchContion.site = ''
     }
   }
 }
@@ -363,6 +364,10 @@ const Home = Vue.defineComponent({
     }
   },
   methods: {
+    newSite(name = '') {
+      let url = `https://www.douyin.com/search/${name}?publish_time=0&sort_type=2`;
+      window.open(url);
+    },
     getImg(v) {
       let u = location.hash.slice(3);
       let obj = parseParms(u);

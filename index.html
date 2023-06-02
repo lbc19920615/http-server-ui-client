@@ -50,19 +50,18 @@
             }
         }
     </style>
-
 </head>
 <body>
     <!-- {{> popover }} -->
 
 
-
+    <!-- {{> webgl }}  -->
    <div id="tpl" style="display: none"></div>
     <div id="app">
         <router-view></router-view>
     </div>
     <template id="home-tpl">
-      <div>
+      <div class="home-con" :class="bigCls">
           <div class="tool">
               <!-- <el-button size="small" @click="utils_screenShot">视频封面</el-button> -->
               <div class="row">

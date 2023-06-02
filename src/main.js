@@ -361,6 +361,9 @@ const Home = Vue.defineComponent({
         return [...this.arr]
       }
       return []
+    },
+    bigCls() {
+      return location.href.includes('demo') ? 'demo' : ''
     }
   },
   methods: {

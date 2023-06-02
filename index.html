@@ -113,6 +113,7 @@
                                     @switch="onImageSwitch"
                                     :preview-src-list="bigImgList"  
                                     :initial-index="obj.curIndex"
+                                    lazy
                                     >
                               <template #error="scope">
                                   {{ img.href }}

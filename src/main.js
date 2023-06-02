@@ -274,7 +274,7 @@ const elementIsVisibleInViewport = (el, client) => {
   const { top, left, bottom, right, height } = el.getBoundingClientRect();
   const { innerHeight, innerWidth } = window;
   // console.log(top, bottom, el);
-  return clientHeight / (top + height)  > 0.5
+  return  (top + height)  / clientHeight  > 0.5
   // return  top > 0 && bottom < client.bottom;
   // return  top >= 0 && left >= 0 && bottom <= innerHeight && right <= innerWidth;
   // return partiallyVisible

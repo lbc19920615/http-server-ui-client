@@ -312,11 +312,11 @@ const Home = Vue.defineComponent({
   mounted() {
     let { href = '' } = this.$router.currentRoute.value.query
     this.setData({href})
-    this.inited =  true
+    this.obj.inited =  true
     // console.log('mounted')
   },
   beforeRouteUpdate (to, from) {
-    if (this.inited) {
+    if (this.obj.inited) {
       let { href = '' } = to.query;
       let fromhref = from.query.href
       this.num = 0;
@@ -337,7 +337,9 @@ const Home = Vue.defineComponent({
   data() {
     return {
       num: 0,
-      inited: false,
+      obj: {
+        inited: false,
+      },
       arr: [],
     };
   },
@@ -364,9 +366,18 @@ const Home = Vue.defineComponent({
     },
     bigCls() {
       return location.href.includes('demo') ? 'demo' : ''
+    },
+    arrLen() {
+      // console.log('arrLen', this.arr.length)
+      if (Array.isArray(this.arr)) {
+        return this.arr.length
+      }
+
+      return 0
     }
   },
   methods: {
+
     newSite(name = '') {
       let url = `https://www.douyin.com/search/${name}?publish_time=0&sort_type=2`;
       window.open(url);
@@ -413,7 +424,7 @@ const Home = Vue.defineComponent({
       let u = location.hash.slice(3) + encodeURIComponent( img.href.slice(1));
 
       let obj = parseParms(u);
-      console.log(img.href, obj)
+      // console.log(img.href, obj)
       this.$router.push({
         path: '/',
         query: {
@@ -435,7 +446,15 @@ const Home = Vue.defineComponent({
     },
     onImageLoad(img, $event) {
       img.loaded = true;
-      // console.log(this)
+      // console.log($event)
+    },
+    onImageOpen() {
+      
+      this.obj.curIndex = 0
+    },
+    onImageSwitch(index) {
+      // console.log('onImageSwitch', index)
+      this.obj.curIndex = index
     }
   }
 });

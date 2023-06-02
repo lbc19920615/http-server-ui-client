@@ -49,6 +49,9 @@
             .tool { 
                 grid-template-columns: 1fr ;
             }
+            .mobile-hide {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -73,9 +76,11 @@
               </div>
                 <div class="row"> 
                     <div><span>倒序</span> <el-switch v-model="searchContion.reverse" /></div>
-                    <div @click="goBackHistry()">返回</div>
+                    <div @click="goBackHistry()">返回</div> 
+                    <div >{{ arrLen }}</div>
+                    <div>{{obj.curIndex}}</div>
                 </div>
-               <div class="row">
+               <div class="row mobile-hide">
                     <el-input size="small" v-model="searchContion.site" placeholder=""></el-input>
                     <el-button size="small" @click="newSite(searchContion.site)">抖音</el-button>
                </div> 
@@ -96,10 +101,11 @@
                                     :alt="img.hrefDispay"
                                     :src="getImg(img.href)"
                                     @load="onImageLoad(img, $event)"
-
+                                    @close="onImageOpen"
+                                    @switch="onImageSwitch"
                                     :preview-src-list="bigImgList" lazy >
                               <template #error="scope">
-                                  {{ img.href }} 
+                                  {{ img.href }}
                               </template>
                           </el-image>
                       </template>

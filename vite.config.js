@@ -8,9 +8,9 @@ import {linkvue} from "./plugins/linkvue";
 
 let plugins = [
 
-  handlebars({
-    partialDirectory: resolve(__dirname, 'src/partials'),
-  }),
+  // handlebars({
+  //   partialDirectory: resolve(__dirname, 'src/partials'),
+  // }),
   importMaps([
     {
       imports: {

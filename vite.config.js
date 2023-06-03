@@ -15,8 +15,8 @@ let plugins = [
     {
       imports: {
         lodash: 'https://esm.sh/lodash-es@4.17.20',
-        // "three": "https://unpkg.com/three@0.153.0/build/three.module.js",
-        // "three/addons/": "https://unpkg.com/three@0.153.0/examples/jsm/"
+        "three": "https://unpkg.com/three@0.153.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.153.0/examples/jsm/"
       },
     },
   ]),

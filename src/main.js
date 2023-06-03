@@ -337,14 +337,18 @@ const Home = Vue.defineComponent({
       let { href = '' } = to.query;
       let fromhref = from.query.href
       this.num = 0;
-      document.getElementById('con').scrollTop = 0
+      this.obj.curIndex = 0;
       window.globalItems = false;
+      
+      document.getElementById('con').scrollTop = 0
+
       this.resetSearchContion();
       window.globalSearchParams = new URLSearchParams(`?href=${href}`);
       // console.log(fromhref)
       window.lastGlobalSearchParams = new URLSearchParams(`?href=${fromhref}`);
       this.setData({href})
     }
+
   },
   beforeRouteEnter() {
     window.globalSearchParams = new URLSearchParams(location.hash.replace('#/?', ''));
@@ -414,8 +418,11 @@ const Home = Vue.defineComponent({
       let u = new URL(SEVER_ORIGIN + link.href)
       // u.searchParams.append('v', Date.now())
       let data = await fetchDirectoryURL(u.toString(), link.href)
-      // console.log(data)
-      this.arr = data
+      console.log(data)
+      this.arr = data;
+      Vue.nextTick(() => {
+        this.resetFun();
+      })
     },
     backLink() {
       let u = location.hash.slice(3)
@@ -476,35 +483,30 @@ const Home = Vue.defineComponent({
       // console.log('onImageSwitch', index)
       this.obj.curIndex = index
     },
-    onListScroll() {
+    resetFun(){
       let self = this;
-      if (!window.globalItems) {
-        window.globalItems = [...document.querySelectorAll('.list-item')];
+      window.globalItems = [...document.querySelectorAll('.list-item')];
 
-        window.getSet = function() {
-          return  window.globalItems.map(v => elementIsVisibleInViewport(v, true))
-        }
-
-        window.setCurIndex = function() {
-          globalItems.every((v, index) => {
-            let isVisible = elementIsVisibleInViewport(v, document.getElementById('con').getBoundingClientRect())
-            if ( isVisible) {
-              // console.log(v)
-              self.obj.curIndex = index;
-              return false
-            }
-            return true
-          })
-        }
+      window.getSet = function() {
+        return  window.globalItems.map(v => elementIsVisibleInViewport(v, true))
       }
 
+      window.setCurIndex = function() {
+        globalItems.every((v, index) => {
+          let isVisible = elementIsVisibleInViewport(v, document.getElementById('con').getBoundingClientRect())
+          if ( isVisible) {
+            // console.log(v)
+            self.obj.curIndex = index;
+            return false
+          }
+          return true
+        })
+      }
+    },
+    onListScroll() {
+   
+
       window.setCurIndex()
-    
-      // let index = indexes.indexOf(true)
-      // // console.log('onListScroll', index)
-      // if (index > -1) {
-      //   this.obj.curIndex = index
-      // }
     }
   }
 });

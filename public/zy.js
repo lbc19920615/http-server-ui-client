@@ -3133,7 +3133,7 @@
 
     ZY.fav.init();
 
-    ZY.fileMan = new StorageManager('file');
+
 
 
 
@@ -3155,7 +3155,7 @@
 
     let FileUtils = {}
 
-    FileUtils.saveFilesDBToCache = async function(path, list = []) {
+    FileUtils.saveFilesDBToCache = async function (path, list = []) {
         let f = new Files();
         f.setList(list);
 
@@ -3176,7 +3176,7 @@
         ZY.fileMan.set(path, saveData)
     }
 
-    FileUtils.getFilesDBFromCache = async function(key) {
+    FileUtils.getFilesDBFromCache = async function (key) {
         let saveData = await ZY.fileMan.get(key);
         if (!saveData) {
             return {}
@@ -3197,10 +3197,13 @@
     window.FileUtils = FileUtils
 
 
-    ZY.FoldMan = (function() {
-        const {Node, Tree, createTreeFromFlatArray, traverseBreathFirst  } = window.PlainTree
-        const rootNode = new Node('body');
-        const tree = new Tree(rootNode);
+    ZY.FoldMan = (function () {
+        // 保存文件树结构
+        let fileMan = new StorageManager('file');
+
+        const { Node, Tree, createTreeFromFlatArray, traverseBreathFirst } = window.PlainTree
+        let rootNode = new Node('body');
+        let tree;
 
         function toFlatArr(tree) {
             let m = tree.flatMap()
@@ -3208,20 +3211,12 @@
                 // console.log(v)
                 return {
                     id: v.id,
-                    name: v.data,
+                    data: v.data,
                     parentId: v?.parent?.id ?? null
                 }
             })
         }
 
-        // console.log(toFlatArr(tree))
-
-
-        // let tree2 = createTreeFromFlatArray (
-        //     toFlatArr(tree)
-        // )
-
-        // console.log(tree2)
 
 
         function _getParentNode(parentNode, trueArr) {
@@ -3242,22 +3237,27 @@
         }
 
         function getParentNode(parentPath) {
-          
+
             let parentPathArr = ['body']
             if (parentPath) {
                 parentPathArr = parentPathArr.concat(parentPath.split('/'))
             }
+            // console.log(rootNode, parentPathArr)
             let ret = null;
             if (parentPathArr.length < 2) {
                 ret = rootNode
             } else {
-                ret  =_getParentNode(rootNode, parentPathArr.slice(1))
+                ret = _getParentNode(rootNode, parentPathArr.slice(1))
             }
             return ret;
         }
 
         function addFolder(key, parentPath) {
             let parentNode = getParentNode(parentPath);
+            if (!parentNode) {
+                console.error('parentNode', parentPath)
+                return;
+            }
             let childrenData = parentNode.children.map(v => v.data)
             if (childrenData.includes(key)) {
                 console.error('同级文件夹名不能重复')
@@ -3275,20 +3275,79 @@
             // console.log(parentNode)
         }
 
+        // console.log(toFlatArr(tree))
+
+
+        // let tree2 = createTreeFromFlatArray (
+        //     toFlatArr(tree)
+        // )
+
+
+        function toData() {
+            return toFlatArr(tree)
+        }
+
+        /**
+         * 
+         * @param {[]} arr 
+         * @returns 
+         */
+        function fromData(arr) {
+            let _tree = createTreeFromFlatArray(arr)
+            // console.log(_tree)
+            _tree.traverseBreathFirst(function (node) {
+                // console.log(node)
+                let key = node.data.data
+                node.data = key
+            })
+            return _tree
+        }
+
         return {
             getParentNode,
             getTree() {
                 return tree
             },
+            toData,
+            fromData,
             addFolder,
             delFolder,
+            /**
+             * 保存
+             */
+            save: function () {
+                fileMan.set('path_tree', toData())
+            },
+
+            /**
+             * 初始化
+             */
+            init: async function () {
+                let flatArr = await fileMan.get('path_tree');
+                if (Array.isArray(flatArr)) {
+                    tree = fromData(flatArr);
+                    rootNode = tree.root;
+                    // console.log(tree)
+                } else {
+                    tree = new Tree(rootNode);
+                }
+            }
         }
+
     })();
 
-    ZY.FoldMan.addFolder('b')
-    ZY.FoldMan.addFolder('a')
-    ZY.FoldMan.addFolder('b1', 'b')
-    ZY.FoldMan.addFolder('a1', 'a')
+    ZY.FoldMan.init();
+
+    // window.testFold = function () {
+    //     ZY.FoldMan.addFolder('b')
+    //     ZY.FoldMan.addFolder('a')
+    //     ZY.FoldMan.addFolder('b1', 'b')
+    //     ZY.FoldMan.addFolder('a1', 'a')
+    //     let flatData = ZY.FoldMan.toData()
+    //     let newTree = ZY.FoldMan.fromData(flatData)
+    //     console.log(newTree)
+    //     ZY.FoldMan.save();
+    // }
 
 
 })();

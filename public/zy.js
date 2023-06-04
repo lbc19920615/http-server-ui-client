@@ -3257,14 +3257,20 @@
         }
 
         function addFolder(key, parentPath) {
-            let parentNode = getParentNode(parentPath)
+            let parentNode = getParentNode(parentPath);
+            let childrenData = parentNode.children.map(v => v.data)
+            if (childrenData.includes(key)) {
+                console.error('同级文件夹名不能重复')
+                return
+            }
             const curNode = parentNode.addChild(key);
-            console.log(parentNode)
+            // console.log(parentNode)
+            return curNode
         }
 
         function delFolder(key, parentPath) {
             let parentNode = getParentNode(parentPath);
-            console.log(parentNode)
+            // console.log(parentNode)
             parentNode.removeChildrenByData(key);
             // console.log(parentNode)
         }

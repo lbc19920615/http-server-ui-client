@@ -2,6 +2,10 @@ import './index.css'
 // import qs from 'qs'
 // import JSON5 from 'json5';
 
+import solarlunar from "solarlunar";
+
+globalThis.solarlunar = solarlunar;
+
 import ZVideo from "./compnents/ZVideo.vue";
 
 function parseParms(str) {
@@ -108,7 +112,7 @@ function getDateFromlastModified(lastModified = '') {
 
 function fetchDirectoryURL(url = '', baseHref = '') {
   return new Promise((resolve, reject) => {
-    console.log(url)
+    // console.log(url)
     var myHeaders = new Headers();
     myHeaders.append('pragma', 'no-cache');
     myHeaders.append('cache-control', 'no-cache');
@@ -119,8 +123,9 @@ function fetchDirectoryURL(url = '', baseHref = '') {
       headers: myHeaders,
     };
 
-    let randomStr = '?v=' + Date.now()
-    var myRequest = new Request(url + randomStr);
+    let randomStr = '?v=' + Date.now();
+    let myUrl = url + randomStr;
+    var myRequest = new Request(myUrl);
 
     fetch(myRequest).then((res) => {
       return res.text()
@@ -203,6 +208,8 @@ function fetchDirectoryURL(url = '', baseHref = '') {
         })
         resolve(arr)
       }
+    }).catch(e => {
+      ElementPlus.ElMessage.error(e + " " + myUrl)
     })
   })
 }

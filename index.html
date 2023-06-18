@@ -16,27 +16,6 @@
     <link rel="stylesheet" href="element-plus.css" />
     <script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.7/dayjs.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
-<!--    <script>-->
-<!--        window.onload=function () {-->
-<!--            document.addEventListener('touchstart',function (event) {-->
-<!--                if(event.touches.length>1){-->
-<!--                    event.preventDefault();-->
-<!--                }-->
-<!--            });-->
-<!--            var lastTouchEnd=0;-->
-<!--            document.addEventListener('touchend',function (event) {-->
-<!--                var now=(new Date()).getTime();-->
-<!--                if(now-lastTouchEnd<=300){-->
-<!--                    event.preventDefault();-->
-<!--                }-->
-<!--                lastTouchEnd=now;-->
-<!--            },false);-->
-<!--            document.addEventListener('gesturestart', function (event) {-->
-<!--                event.preventDefault();-->
-<!--            });-->
-<!--        }-->
-<!--    </script>-->
-
     <style>
         .con {
             margin-top: 30px;
@@ -62,14 +41,28 @@
     </style>
 </head>
 <body>
-    <!-- {{> popover }} -->
 
-
-    <!-- {{> webgl }}  -->
    <div id="tpl" style="display: none"></div>
     <div id="app">
         <router-view></router-view>
     </div>
+
+    <template id="folder-tpl">
+        <div style="overflow: hidden;">
+            <div class="tool">
+                <div class="row">
+                    <el-link class="back-link" type="primary" @click="backLink()"><span>../</span></el-link>
+               {{obj.curIndex}} / <span v-if="obj.arr"> {{obj.arr.length}}</span>
+                </div>
+            </div>
+            <div id="con" class="con" style="height: 80vh; overflow-y: auto;"
+            @scroll="onListScroll"
+      >
+            <f-list v-if="obj" v-bind="obj" @event="onEvent"></f-list>
+            </div>
+        </div>
+    </template>
+
     <template id="home-tpl">
       <div class="home-con" :class="bigCls">
           <div class="tool">
@@ -79,8 +72,7 @@
                 <el-input-number  size="small" v-model="num" :min="0" :step="20"></el-input-number>
                 <el-button size="small" @click="utils_appendNum(1)">1</el-button>
                 <div size="small"  @click="utils_jumpTo">跳转</div>
-                          
-          <div>
+            <div>
             <el-link class="back-link" type="primary" @click="backLink({href: '.../'})"><span>../</span></el-link>
         </div>
               </div>
@@ -89,11 +81,11 @@
                     <div @click="goBackHistry()">返回</div> 
                     <div >{{ arrLen }}</div>
                     <div>{{obj.curIndex}}</div>
-                    
                 </div>
                <div class="row mobile-hide">
-                    <el-input size="small" v-model="searchContion.site" placeholder=""></el-input>
-                    <el-button size="small" @click="newSite(searchContion.site)">抖音</el-button>
+                    <f-sds v-if="obj" ></f-sds>
+                    <!-- <el-input size="small" v-model="searchContion.site" placeholder=""></el-input>
+                    <el-button size="small" @click="newSite(searchContion.site)">抖音</el-button> -->
                </div> 
           </div>
 

@@ -30,6 +30,7 @@
     "vite-plugin-import-maps": "^0.1.2"
   },
   "dependencies": {
+    "define-function": "^2.0.0",
     "json5": "^2.2.0",
     "node-find-files": "^1.0.0",
     "qs": "^6.10.2",

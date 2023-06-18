@@ -1,12 +1,25 @@
 import './index.css'
-// import qs from 'qs'
-// import JSON5 from 'json5';
+import Folder from './views/folder';
+
 
 import solarlunar from "solarlunar";
 
 globalThis.solarlunar = solarlunar;
 
 import ZVideo from "./compnents/ZVideo.vue";
+
+import {context} from 'define-function'
+globalThis.createFun = async function(str, ctxObj = {}) {
+  const ctx = await context({ global: { 
+    console,
+    anwerOfEverything() {
+        return 42;
+    },
+    ...ctxObj
+  } }) // inject console and anwerOfEverything to global
+  const f = await ctx.def(str)
+  return f;
+}
 
 function parseParms(str) {
   var pieces = str.split("&"), data = {}, i, parts;
@@ -20,6 +33,7 @@ function parseParms(str) {
   }
   return data;
 }
+globalThis.parseParms = parseParms;
 
 
 /**
@@ -213,6 +227,7 @@ function fetchDirectoryURL(url = '', baseHref = '') {
     })
   })
 }
+globalThis.fetchDirectoryURL = fetchDirectoryURL;
 
 
 globalThis.resolvePath = function () {
@@ -290,6 +305,7 @@ const elementIsVisibleInViewport = (el, client) => {
   //       ((left > 0 && left < innerWidth) || (right > 0 && right < innerWidth))
   //   : top >= 0 && left >= 0 && bottom <= innerHeight && right <= innerWidth;
 };
+window.elementIsVisibleInViewport = elementIsVisibleInViewport;
 
 let utilsMixin = {
   methods: {
@@ -311,7 +327,6 @@ let searchMixin = {
   data() {
     return {
       searchContion: {
-      
       }
     }
   },
@@ -337,6 +352,7 @@ const Home = Vue.defineComponent({
     this.setData({href})
     this.obj.inited =  true
     this.obj.curIndex = 0;
+    window.curPage = this;
     // console.log('mounted')
   },
   beforeRouteUpdate (to, from) {
@@ -345,8 +361,8 @@ const Home = Vue.defineComponent({
       let fromhref = from.query.href
       this.num = 0;
       this.obj.curIndex = 0;
+      this.obj.loaded = true;
       window.globalItems = false;
-      
       document.getElementById('con').scrollTop = 0
 
       this.resetSearchContion();
@@ -355,20 +371,18 @@ const Home = Vue.defineComponent({
       window.lastGlobalSearchParams = new URLSearchParams(`?href=${fromhref}`);
       this.setData({href})
     }
-
   },
   beforeRouteEnter() {
     window.globalSearchParams = new URLSearchParams(location.hash.replace('#/?', ''));
-    // console.log(globalSearchParams.get('href'))
   },
   beforeRouteLeave() {
-   
   },
   data() {
     return {
       num: 0,
       obj: {
         inited: false,
+        loaded: true,
       },
       arr: [],
     };
@@ -517,10 +531,22 @@ const Home = Vue.defineComponent({
     }
   }
 });
+
+
 const routes = [
   {
     path: '/',
-    component: Home
+    component: Home,
+  },
+  {
+    path: '/folder/:href',
+    name: '',
+    component: Folder,
+  },
+  {
+    path: '/folder/',
+    name: 'folder',
+    component: Folder,
   },
 ]
 
@@ -530,7 +556,27 @@ const router = VueRouter.createRouter({
   routes, // `routes: routes` 的缩写
 })
 
-const App = {}
+let _currentTo = {}
+router.beforeEach(async (to) => {
+  _currentTo = to
+  if(to.name === "folder" && !to.params.hasOwnProperty("href")){
+      to.params.href = "__"
+  }
+    // console.log(to)
+  return true;
+})
+window.getCurrentPage = function() {
+  let to = _currentTo;
+   if (to && Array.isArray(to.matched)) {
+    return to.matched[0]?.instances.default
+   }
+}
+
+const App = {
+  mounted() {
+    window.globalAppCtx = this;
+  }
+}
 const app = Vue.createApp(App);
 app.use(router)
 app.component(ZVideo.name, ZVideo)
@@ -539,3 +585,75 @@ app.config.devtools = true
 
 app.use(ElementPlus);
 app.mount("#app");
+
+// window.globalApp = app;
+
+
+// defComAndReloadCurPage('f-sds', {template: `<div>hello</div>`})
+// 定义代码
+window.defComAndReloadCurPage = function(name = "", def = {}) {
+  app.component(name, def);
+  getCurrentPage().$forceUpdate();
+}
+
+//字符串转字节序列
+function stringToByte(str) {
+    var bytes = new Array();
+    var len, c;
+    len = str.length;
+    for (var i = 0; i < len; i++) {
+        c = str.charCodeAt(i);
+        if (c >= 0x010000 && c <= 0x10FFFF) {
+            bytes.push(((c >> 18) & 0x07) | 0xF0);
+            bytes.push(((c >> 12) & 0x3F) | 0x80);
+            bytes.push(((c >> 6) & 0x3F) | 0x80);
+            bytes.push((c & 0x3F) | 0x80);
+        } else if (c >= 0x000800 && c <= 0x00FFFF) {
+            bytes.push(((c >> 12) & 0x0F) | 0xE0);
+            bytes.push(((c >> 6) & 0x3F) | 0x80);
+            bytes.push((c & 0x3F) | 0x80);
+        } else if (c >= 0x000080 && c <= 0x0007FF) {
+            bytes.push(((c >> 6) & 0x1F) | 0xC0);
+            bytes.push((c & 0x3F) | 0x80);
+        } else {
+            bytes.push(c & 0xFF);
+        }
+    }
+    return bytes;
+}
+
+
+//字节序列转ASCII码
+//[0x24, 0x26, 0x28, 0x2A] ==> "$&C*"
+function byteToString(arr) {
+  if (typeof arr === 'string') {
+      return arr;
+  }
+  var str = '',
+      _arr = arr;
+  for (var i = 0; i < _arr.length; i++) {
+      var one = _arr[i].toString(2),
+          v = one.match(/^1+?(?=0)/);
+      if (v && one.length == 8) {
+          var bytesLength = v[0].length;
+          var store = _arr[i].toString(2).slice(7 - bytesLength);
+          for (var st = 1; st < bytesLength; st++) {
+              store += _arr[st + i].toString(2).slice(2);
+          }
+          str += String.fromCharCode(parseInt(store, 2));
+          i += bytesLength - 1;
+      } else {
+          str += String.fromCharCode(_arr[i]);
+      }
+  }
+  return str;
+}
+
+let Utils = {
+  stringToByte,
+  byteToString
+}
+globalThis.Utils = Utils;
+
+
+

@@ -42,7 +42,7 @@
 </head>
 <body>
 
-   <div id="tpl" style="display: none"></div>
+   <!-- <div id="tpl" style="display: none"></div> -->
     <div id="app">
         <router-view></router-view>
     </div>
@@ -64,17 +64,24 @@
     </template>
 
     <template id="home-tpl">
-      <div class="home-con" >
-        good
+      <div class="home-con" >good
+        <!-- <div>
+            <div>{{name}} {{count}} {{doubleCount}}</div>
+        <div>
+            <el-button @click="increment">add</el-button>
+        </div>
+            </div> -->
+
+        <!-- <home-form v-if="obj"></home-form> -->
       </div>
     </template>
     <script src="/jquery.js"></script>
 <!--    <script src="https://cdn.bootcdn.net/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>-->
     <!-- Import Vue 3 -->
-    <script src="/Vue.js"></script>
-    <script src="/vue-router.js"></script>
+    <!-- <script src="/Vue.js"></script>
+    <script src="/vue-router.js"></script> -->
     <!-- Import component library -->
-    <script src="/element-plus.js"></script>
+    <!-- <script src="/element-plus.js"></script> -->
 
     <script type="module" src="/src/main.js"></script>
     <script type="module" src="/webgl_demo.js"></script>

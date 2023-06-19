@@ -117,7 +117,7 @@ export default {
             document.getElementById('con').scrollTop = 0
             this.render();
             window.goodUtils = {};
-            Vue.nextTick(() => {
+            this.$nextTick(() => {
                 self.resetFun(window.goodUtils);
             })
         },

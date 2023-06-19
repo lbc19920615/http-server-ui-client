@@ -1,3 +1,7 @@
+import {createApp} from 'vue';
+import * as VueRouter from 'vue-router';
+import ElementPlus from 'element-plus';
+
 import './index.css';
 
 import "./utils.js";
@@ -14,7 +18,7 @@ globalThis.solarlunar = solarlunar;
 import ZVideo from "./compnents/ZVideo.vue";
 
 import {context} from 'define-function';
-console.log(context)
+// console.log(context)
 globalThis.createFun = async function(str, ctxObj = {}) {
   const ctx = await context({ global: {
     console,
@@ -26,6 +30,7 @@ globalThis.createFun = async function(str, ctxObj = {}) {
   const f = await ctx.def(str)
   return f;
 }
+
 
 function parseParms(str) {
   var pieces = str.split("&"), data = {}, i, parts;
@@ -315,7 +320,7 @@ const App = {
     window.globalAppCtx = this;
   }
 }
-const app = Vue.createApp(App);
+const app = createApp(App);
 app.use(router)
 app.component(ZVideo.name, ZVideo)
 
@@ -329,9 +334,11 @@ app.mount("#app");
 
 // defComAndReloadCurPage('f-sds', {template: `<div>hello</div>`})
 // 定义代码
-window.defComAndReloadCurPage = function(name = "", def = {}) {
+window.defComAndReloadCurPage = function(name = "", def = {}, force = true) {
   app.component(name, def);
-  getCurrentPage().$forceUpdate();
+  if (force) {
+    getCurrentPage().$forceUpdate();
+  }
 }
 
 

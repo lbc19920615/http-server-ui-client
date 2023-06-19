@@ -33,9 +33,10 @@
     "define-function": "^2.0.0",
     "json5": "^2.2.0",
     "node-find-files": "^1.0.0",
+    "pinia": "^2.1.4",
     "qs": "^6.10.2",
     "sass": "^1.49.11",
     "solarlunar": "^2.0.7",
-    "vue": "^3.2.26"
+    "vue": "^3.3.4"
   }
 }

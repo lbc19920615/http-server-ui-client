@@ -1,16 +1,22 @@
-import './index.css'
+import './index.css';
+
+import "./utils.js";
+
+import { createPinia } from 'pinia';
+
 import Folder from './views/folder';
+import Home from './views/home';
 
 
 import solarlunar from "solarlunar";
-
 globalThis.solarlunar = solarlunar;
 
 import ZVideo from "./compnents/ZVideo.vue";
 
-import {context} from 'define-function'
+import {context} from 'define-function';
+console.log(context)
 globalThis.createFun = async function(str, ctxObj = {}) {
-  const ctx = await context({ global: { 
+  const ctx = await context({ global: {
     console,
     anwerOfEverything() {
         return 42;
@@ -48,53 +54,10 @@ function resolvePixivName(a, b) {
   return parseFloat(aarr[1].replace('p', '')) - parseFloat(barr[1].replace('p', ''));
 }
 
-// findElements takes a function definition, the output must be Truthy or Falsy
-function findElements( accept = x => customElements.get(x.localName) || 0) {
-  function log() {
-    console.log(`%c findElements `, `background:purple;color:yellow`, ...arguments);
-  }
-  let node, elements = [], shadowRootCount = 0;
-  function diveNode( diveRoot ) {
-    // IE9 was last to implement the TreeWalker/NodeIterator API ... in 2011
-    let iterator = document.createNodeIterator(
-        diveRoot,
-        NodeFilter.SHOW_ELEMENT,
-        node => accept(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
-    );
-    while ( node = iterator.nextNode() ) {
-      if (node.shadowRoot) {
-        log(`dive into shadowRoot #${++shadowRootCount} at`, node.outerHTML);
-        [...node.shadowRoot.children].forEach( diveNode );
-      }
-      elements.push(node);
-    }
-  }
-  diveNode( document.body ); // initial dive location
-  log(elements.length, `elements found`,[elements]);
-  //return elements;
-}
-// findElements((x) => true); // find all DOM elements
-// findElements(); // find all Custom Elements
-
-function getHereDoc(fn) {
-  return fn.toString().match(/\/\*\s*([\s\S]*?)\s*\*\//m)[1];
-}
-
-const SEVER_ORIGIN =   'http://' + location.hostname + ':7100';
-const hashQuery = location.hash.replace('#/?', '?')
-let globalURL = new  URL('https://www.baidu.com' + hashQuery)
-let globalSearchParams = globalURL.searchParams
-let globalHREF = globalSearchParams.get('href')
-
-// let str = qs.stringify({
-//   ssds: '111',
-//   name: 'sdsdsdsd'
-// });
 
 window.jumpToItem = function (index) {
   document.querySelector(`[data-index="${index}"]`).scrollIntoView()
 }
-
 
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -117,7 +80,6 @@ function resolveHref(v, baseHref) {
 }
 
 function getDateFromlastModified(lastModified = '') {
-  
   let arr = lastModified.split(' ');
   let yearMonthDay = arr[0].split('-').map(v => parseInt(v))
   // console.log(arr, yearMonthDay)
@@ -307,230 +269,6 @@ const elementIsVisibleInViewport = (el, client) => {
 };
 window.elementIsVisibleInViewport = elementIsVisibleInViewport;
 
-let utilsMixin = {
-  methods: {
-    utils_screenShot() {
-      let { href = '' } = this.$router.currentRoute.value.query
-      // console.log(href)
-      import(`./sds.linkvue?v=${Date.now()}&href=${href}`)
-    },
-    utils_jumpTo() {
-      window.jumpToItem(this.num)
-    },
-    utils_appendNum(v = 10) {
-      this.num = this.num + v
-    }
-  }
-}
-
-let searchMixin = {
-  data() {
-    return {
-      searchContion: {
-      }
-    }
-  },
-  beforeMount() {
-    this.resetSearchContion(); 
-  },
-  methods: {
-    resetSearchContion() {
-      this.searchContion.reverse =  false
-      this.searchContion.site = ''
-    }
-  }
-}
-
-const Home = Vue.defineComponent({
-  template: '#home-tpl',
-  mixins: [
-    utilsMixin,
-    searchMixin
-  ],
-  mounted() {
-    let { href = '' } = this.$router.currentRoute.value.query
-    this.setData({href})
-    this.obj.inited =  true
-    this.obj.curIndex = 0;
-    window.curPage = this;
-    // console.log('mounted')
-  },
-  beforeRouteUpdate (to, from) {
-    if (this.obj.inited) {
-      let { href = '' } = to.query;
-      let fromhref = from.query.href
-      this.num = 0;
-      this.obj.curIndex = 0;
-      this.obj.loaded = true;
-      window.globalItems = false;
-      document.getElementById('con').scrollTop = 0
-
-      this.resetSearchContion();
-      window.globalSearchParams = new URLSearchParams(`?href=${href}`);
-      // console.log(fromhref)
-      window.lastGlobalSearchParams = new URLSearchParams(`?href=${fromhref}`);
-      this.setData({href})
-    }
-  },
-  beforeRouteEnter() {
-    window.globalSearchParams = new URLSearchParams(location.hash.replace('#/?', ''));
-  },
-  beforeRouteLeave() {
-  },
-  data() {
-    return {
-      num: 0,
-      obj: {
-        inited: false,
-        loaded: true,
-      },
-      arr: [],
-    };
-  },
-  computed: {
-    bigImgList() {
-      return this.arr.map(v => {
-        return this.getImg(v.href)
-      })
-    },
-    sortArr() {
-
-      if (Array.isArray(this.arr)) {
-        if (this.searchContion) {
-          if (this.searchContion.reverse) {
-            console.log(this.searchContion.reverse);
-            return [...this.arr].sort((a, b) => {
-              return b.dateObj - a.dateObj;
-            })
-          }
-        }
-        return [...this.arr]
-      }
-      return []
-    },
-    bigCls() {
-      return location.href.includes('demo') ? 'demo' : ''
-    },
-    arrLen() {
-    
-      if (Array.isArray(this.arr)) {
-        return this.arr.length
-      }
-
-      return 0
-    }
-  },
-  methods: {
-
-    newSite(name = '') {
-      let url = `https://www.douyin.com/search/${name}?publish_time=0&sort_type=2`;
-      window.open(url);
-    },
-    getImg(v) {
-      let u = location.hash.slice(3);
-      let obj = parseParms(u);
-      // console.log(obj)
-      if (!obj.href) {
-      }
-      return SEVER_ORIGIN + (obj.href ?? '/') + v.slice(1)
-    },
-    async setData(link) {
-
-      let u = new URL(SEVER_ORIGIN + link.href)
-      // u.searchParams.append('v', Date.now())
-      let data = await fetchDirectoryURL(u.toString(), link.href)
-      console.log(data)
-      this.arr = data;
-      Vue.nextTick(() => {
-        this.resetFun();
-      })
-    },
-    backLink() {
-      let u = location.hash.slice(3)
-      let obj = parseParms(u);
-      let arr = obj.href.split('/')
-      arr.splice(arr.length - 1 , 1)
-      arr.splice(arr.length - 1 , 1)
-      // console.log(arr.slice(1))
-      let href = arr.slice(1).join('/')
-      if (href) {
-        href = href + '/'
-      }
-      this.$router.push({
-        path: '/',
-        query: {
-          href: '/' + href
-        }
-      })
-    },
-    goBackHistry() {
-      this.$router.back()
-    },
-    goToLink(img) {
-      let { href = '' } = this.$router.currentRoute.value.query
-      let u = location.hash.slice(3) + encodeURIComponent( img.href.slice(1));
-
-      let obj = parseParms(u);
-      // console.log(img.href, obj)
-      this.$router.push({
-        path: '/',
-        query: {
-          // href: resolvePath(href, img.href),
-          href: obj.href ?? img.href
-          // v: Date.now()11
-        }
-      })
-    },
-    checkMimeType(fileExt, lib) {
-      let imageExt = ['png', 'jpg', 'jpeg']
-      if (lib === 'image') {
-        return imageExt.includes(fileExt)
-      }
-      return false
-    },
-    jumpHttpServerLink(v) {
-      window.open(SEVER_ORIGIN + v)
-    },
-    onImageLoad(img, $event) {
-      img.loaded = true;
-      // console.log($event)
-    },
-    onImageOpen() {
-      
-      // this.obj.curIndex = 0
-      window.setCurIndex ()
-    },
-    onImageSwitch(index) {
-      // console.log('onImageSwitch', index)
-      this.obj.curIndex = index
-    },
-    resetFun(){
-      let self = this;
-      window.globalItems = [...document.querySelectorAll('.list-item')];
-
-      window.getSet = function() {
-        return  window.globalItems.map(v => elementIsVisibleInViewport(v, true))
-      }
-
-      window.setCurIndex = function() {
-        globalItems.every((v, index) => {
-          let isVisible = elementIsVisibleInViewport(v, document.getElementById('con').getBoundingClientRect())
-          if ( isVisible) {
-            // console.log(v)
-            self.obj.curIndex = index;
-            return false
-          }
-          return true
-        })
-      }
-    },
-    onListScroll() {
-   
-
-      window.setCurIndex()
-    }
-  }
-});
 
 
 const routes = [
@@ -583,10 +321,10 @@ app.component(ZVideo.name, ZVideo)
 
 app.config.devtools = true
 
+const pinia = createPinia()
+app.use(pinia);
 app.use(ElementPlus);
 app.mount("#app");
-
-// window.globalApp = app;
 
 
 // defComAndReloadCurPage('f-sds', {template: `<div>hello</div>`})
@@ -596,64 +334,6 @@ window.defComAndReloadCurPage = function(name = "", def = {}) {
   getCurrentPage().$forceUpdate();
 }
 
-//字符串转字节序列
-function stringToByte(str) {
-    var bytes = new Array();
-    var len, c;
-    len = str.length;
-    for (var i = 0; i < len; i++) {
-        c = str.charCodeAt(i);
-        if (c >= 0x010000 && c <= 0x10FFFF) {
-            bytes.push(((c >> 18) & 0x07) | 0xF0);
-            bytes.push(((c >> 12) & 0x3F) | 0x80);
-            bytes.push(((c >> 6) & 0x3F) | 0x80);
-            bytes.push((c & 0x3F) | 0x80);
-        } else if (c >= 0x000800 && c <= 0x00FFFF) {
-            bytes.push(((c >> 12) & 0x0F) | 0xE0);
-            bytes.push(((c >> 6) & 0x3F) | 0x80);
-            bytes.push((c & 0x3F) | 0x80);
-        } else if (c >= 0x000080 && c <= 0x0007FF) {
-            bytes.push(((c >> 6) & 0x1F) | 0xC0);
-            bytes.push((c & 0x3F) | 0x80);
-        } else {
-            bytes.push(c & 0xFF);
-        }
-    }
-    return bytes;
-}
-
-
-//字节序列转ASCII码
-//[0x24, 0x26, 0x28, 0x2A] ==> "$&C*"
-function byteToString(arr) {
-  if (typeof arr === 'string') {
-      return arr;
-  }
-  var str = '',
-      _arr = arr;
-  for (var i = 0; i < _arr.length; i++) {
-      var one = _arr[i].toString(2),
-          v = one.match(/^1+?(?=0)/);
-      if (v && one.length == 8) {
-          var bytesLength = v[0].length;
-          var store = _arr[i].toString(2).slice(7 - bytesLength);
-          for (var st = 1; st < bytesLength; st++) {
-              store += _arr[st + i].toString(2).slice(2);
-          }
-          str += String.fromCharCode(parseInt(store, 2));
-          i += bytesLength - 1;
-      } else {
-          str += String.fromCharCode(_arr[i]);
-      }
-  }
-  return str;
-}
-
-let Utils = {
-  stringToByte,
-  byteToString
-}
-globalThis.Utils = Utils;
 
 
 

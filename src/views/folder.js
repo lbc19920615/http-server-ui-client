@@ -1,5 +1,39 @@
 const SEVER_ORIGIN = 'http://' + location.hostname + ':7100';
 
+let utilsMixin = {
+    methods: {
+        utils_screenShot() {
+            let { href = '' } = this.$router.currentRoute.value.query
+            // console.log(href)
+            import(`./sds.linkvue?v=${Date.now()}&href=${href}`)
+        },
+        utils_jumpTo() {
+            window.jumpToItem(this.num)
+        },
+        utils_appendNum(v = 10) {
+            this.num = this.num + v
+        }
+    }
+}
+
+let searchMixin = {
+    data() {
+        return {
+            searchContion: {
+            }
+        }
+    },
+    beforeMount() {
+        this.resetSearchContion();
+    },
+    methods: {
+        resetSearchContion() {
+            this.searchContion.reverse = false
+            this.searchContion.site = ''
+        }
+    }
+}
+
 const PathResolve = {
     decode(s) {
         return s.replaceAll('__', '/')
@@ -42,21 +76,21 @@ export default {
         },
         onListScroll() {
             let self = this;
-            window.goodUtils.setCurIndex(function(index) {
+            window.goodUtils.setCurIndex(function (index) {
                 self.obj.curIndex = index;
             })
         },
-        resetFun(context){
+        resetFun(context) {
             context.globalItems = [...document.querySelectorAll('.list-item')];
-        
-            context.getSet = function() {
-                return  context.globalItems.map(v => elementIsVisibleInViewport(v, true))
+
+            context.getSet = function () {
+                return context.globalItems.map(v => elementIsVisibleInViewport(v, true))
             }
-        
-            context.setCurIndex = function(cb) {
+
+            context.setCurIndex = function (cb) {
                 context.globalItems.every((v, index) => {
                     let isVisible = elementIsVisibleInViewport(v, document.getElementById('con').getBoundingClientRect())
-                    if ( isVisible) {
+                    if (isVisible) {
                         // console.log(v)
                         cb(index)
                         return false
@@ -82,7 +116,7 @@ export default {
             this.obj.path = trueHref;
             document.getElementById('con').scrollTop = 0
             this.render();
-            window.goodUtils  = {};
+            window.goodUtils = {};
             Vue.nextTick(() => {
                 self.resetFun(window.goodUtils);
             })
@@ -93,7 +127,7 @@ export default {
             }
             else if (e.name === 'index-reset') {
                 let self = this;
-                window.goodUtils.setCurIndex(function(index) {
+                window.goodUtils.setCurIndex(function (index) {
                     self.obj.curIndex = index;
                 })
             }
@@ -191,7 +225,7 @@ export default {
                             })
                         },
                         getImgSrc(v) {
-             
+
                             // console.log(SEVER_ORIGIN + this.path + PathResolve.uncode(v))
                             return SEVER_ORIGIN + this.path + v
                         },
@@ -203,7 +237,7 @@ export default {
                             return false
                         },
                         goToLink(v) {
-                            let trueHref =  PathResolve.encode(this.path +v.href.slice(1))
+                            let trueHref = PathResolve.encode(this.path + v.href.slice(1))
                             // console.log(trueHref)
                             this.$router.push({
                                 path: `/folder/${trueHref}`,

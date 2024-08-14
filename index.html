@@ -6,7 +6,7 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
-    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <!-- <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script> -->
     <script>
       // VConsole will be exported to `window.VConsole` by default.
       //var vConsole = new window.VConsole();
@@ -14,11 +14,25 @@
 
     <script src="/zy.js"></script>
     <link rel="stylesheet" href="element-plus.css" />
-    <script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.7/dayjs.min.js"></script>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <script src="/echarts.js"></script>
+    <script src="/dayjs.min.js"></script>
+    <script src="https://unpkg.com/scheduler-polyfill@next"></script>
+    <script src="/assets/ffmpeg/package/dist/umd/ffmpeg.js"></script>
+    <script src="/assets/util/package/dist/umd/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.12/plugin/quarterOfYear.min.js" integrity="sha512-pWtHtIgIdv64mVaEbh1ACEvfsrMvdSuJ7xGLzm3s1LiSPyA2pGit3cjTBHvFQCkXoX2r9drLdcfAP7C8eGbBTQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.12/plugin/weekOfYear.min.js"></script>
+    <script>
+        window.dayjs.extend(window.dayjs_plugin_quarterOfYear);
+        window.dayjs.extend(window.dayjs_plugin_weekOfYear);
+
+    </script>
+    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"> -->
     <style>
         .con {
             margin-top: 30px;
+            padding: 10px;
+            box-sizing: border-box;
         }
         .tool {
             display: grid;
@@ -38,11 +52,37 @@
                 display: none;
             }
         }
+        .vis-viewer .el-slider__input {
+            width: 160px;
+        }
+        .vis-loading .img1 img {
+            opacity: 1 !important;
+
+            transition: none !important;
+        }
+
+        .vis-loading .img2 img {
+            opacity: 0 !important;
+            transition: none !important;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            align-items: center;
+        }
+
+        @media screen and (max-width: 720px) {
+            .grid {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+            
+        }
     </style>
 </head>
-<body>
+<body class="doc-darktheme">
 
-   <!-- <div id="tpl" style="display: none"></div> -->
+   <div id="tpl" style="display: none"></div>
     <div id="app">
         <router-view></router-view>
     </div>
@@ -64,26 +104,21 @@
     </template>
 
     <template id="home-tpl">
-      <div class="home-con" >good
-        <!-- <div>
-            <div>{{name}} {{count}} {{doubleCount}}</div>
-        <div>
-            <el-button @click="increment">add</el-button>
-        </div>
-            </div> -->
-
-        <!-- <home-form v-if="obj"></home-form> -->
+      <div class="home-con" >
+        <div id="htmlapp"></div>
+        <home-form v-if="obj"></home-form>
       </div>
     </template>
-    <script src="/jquery.js"></script>
+
 <!--    <script src="https://cdn.bootcdn.net/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>-->
     <!-- Import Vue 3 -->
-    <!-- <script src="/Vue.js"></script>
-    <script src="/vue-router.js"></script> -->
-    <!-- Import component library -->
-    <!-- <script src="/element-plus.js"></script> -->
+    <script src="/Vue.js"></script>
+    <script src="/vue-router.js"></script>
+    <script src="/vue-demi.js"></script>
+    <script src="/pinia.js"></script>
+    <script src="/element-plus.js"></script>
 
     <script type="module" src="/src/main.js"></script>
-    <script type="module" src="/webgl_demo.js"></script>
+    <script src="/jquery.js"></script>
 </body>
 </html>

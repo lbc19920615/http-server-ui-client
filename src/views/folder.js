@@ -133,9 +133,31 @@ export default {
             }
         },
         render() {
+               
+
             window.defComAndReloadCurPage('f-list',
                 {
-                    template: /*html*/`<div> 
+                    template: /*html*/`<div>
+                    <div class="vis-viewer" v-if="useSliderImg()">
+                        <div style="position: relative"  >
+           
+               
+                           <div id="viewerimg" class="img2">
+                           <img 
+                           class="img"
+                           style="max-width: 100%; display: block; min-height: 200px; transition: all  1s ease;"
+                           :alt="sortArr[curImgIndex].hrefDispay"
+                           :src="getImgSrc(sortArr[curImgIndex].href)"
+                           @load="onSliderLoad"
+                          / >
+                           </div>
+
+                        </div>
+                        <div class="row">
+                        <el-slider :disabled="curImgLoaded" v-model="curImgIndex" @change="onIndexChange"  :max="sortArr.length" show-input />
+                        </div>
+                    </div>
+                    <div v-else>
                     <div v-for="(img, index) in sortArr" :key="img.id" 
                     class="list-item"> 
                         <template v-if="img.fileExt">
@@ -178,11 +200,19 @@ export default {
                             </div>
                         </template>
                     </div>
+                    </div>
                     </div>`,
                     props: {
                         arr: Array,
                         curIndex: Number,
                         path: String
+                    },
+                    data() {
+                        return {
+                            curImgIndex: 0,
+                            cloneImg: null,
+                            curImgLoaded: false,
+                        }
                     },
                     computed: {
                         bigImgList() {
@@ -206,6 +236,28 @@ export default {
                         },
                     },
                     methods: {
+                        onIndexChange(e) {
+                            console.log('onIndexChange',e)
+                            this.curImgLoaded = true;
+            
+        
+                    
+                        },
+                        onSliderLoad(e){
+                            console.log(e)
+                            setTimeout(() =>{
+                                this.curImgLoaded = false 
+                                this.cloneImg = this.getImgSrc(this.sortArr[this.curImgIndex].href)
+                            }, 1000)
+                        },
+                        useSliderImg() {
+                            console.log(this.arr)
+                            // return true
+                           if (this.arr.every(v => this.checkMimeType(v.fileExt, 'image'))) {
+                             return true
+                           }
+                           return false
+                        },
                         onImageLoad(img) {
                             img.loaded = true;
                         },

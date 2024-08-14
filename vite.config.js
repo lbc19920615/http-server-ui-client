@@ -11,15 +11,14 @@ let plugins = [
   // handlebars({
   //   partialDirectory: resolve(__dirname, 'src/partials'),
   // }),
-  // importMaps([
-  //   {
-  //     imports: {
-  //       lodash: 'https://esm.sh/lodash-es@4.17.20',
-  //       "three": "https://unpkg.com/three@0.153.0/build/three.module.js",
-  //       "three/addons/": "https://unpkg.com/three@0.153.0/examples/jsm/"
-  //     },
-  //   },
-  // ]),
+  importMaps([
+    {
+      imports: {
+        // "vue-demi": "https://cdn.jsdelivr.net/npm/vue-demi@0.14.5/lib/index.iife.min.js",
+        "pinia": "https://cdnjs.cloudflare.com/ajax/libs/pinia/2.1.4/pinia.iife.min.js"
+      },
+    },
+  ]),
   linkvue(),
   vue(),
 

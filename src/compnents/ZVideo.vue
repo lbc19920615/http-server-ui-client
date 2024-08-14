@@ -2,7 +2,7 @@
 .z-video {
   position: relative;
   video {
-    opacity: 0;
+    opacity:1;
   }
   &--playing {
     .z-video__poster {
@@ -49,27 +49,62 @@
 </style>
 
 <template>
-  <div class="z-video" :class="['z-video--' + (isPLaying ? 'playing' : '')]">
+  <div>{{ imgSrc }} {{ poster }}</div>
+  <div class="z-video" 
+  :class="['z-video--' + (isPLaying ? 'playing' : '')]">
     <video style="max-width: 100%;" :id="videoID"
-           muted playsinline  controls
-           preload="none"
-           :poster="getPoster(src)"
+           muted 
+           playsinline 
+       
+           controls
+           @loadeddata="onLoadedData"
+           :src="imgSrc"
     >
-      <source :src="src" type="video/mp4" />
     </video>
-    <div  class="z-video__poster">
+    <!-- <div  class="z-video__poster"  >
       <img
-          @load="onImgLoad"
           @click="play"
           crossorigin="anonymous"
           loading="lazy"
-          :src="getPoster(src)" alt="">
+          :src="poster" alt="">
       <div class="fa fa-play icon-ff"></div>
-    </div>
+    </div> -->
   </div>
 </template>
 
 <script>
+
+      const { fetchFile } = window.FFmpegUtil;
+      const { FFmpeg } = window.FFmpegWASM;
+      let ffmpeg = null;
+
+
+      const transcode = async ({ name, src } ={}) => {
+        let imgName = name.replace('.mp4', '.jpg')
+        if (ffmpeg === null) {
+          ffmpeg = new FFmpeg();
+          ffmpeg.on("log", ({ message }) => {
+            console.log(message);
+          })
+          ffmpeg.on("progress", ({ progress, time }) => {
+            console.log(`${progress * 100} %, time: ${time / 1000000} s`)
+          });
+          await ffmpeg.load({
+            coreURL: "/assets/core/package/dist/umd/ffmpeg-core.js",
+          });
+        }
+        console.log(ffmpeg, imgName)
+        let videoFile = await fetchFile(src)
+        console.log('videoFile', imgName)
+        await ffmpeg.writeFile(name, videoFile);
+        console.time('exec');
+        await ffmpeg.exec(['-i', name,  imgName, '-ss', '00:01:05', '-frames:v', '1']);
+        console.timeEnd('exec');
+        const data = await ffmpeg.readFile(imgName);
+console.log(data)
+return data
+      }
+
 export default {
   name: 'ZVideo',
   props: {
@@ -84,19 +119,35 @@ export default {
       videoID: 'z' + uuidv4(),
     }
   },
+  computed: {
+    imgSrc() {
+      if (this.src) {
+        return this.src.replace('giga//', 'giga/') 
+      }
+      return ''
+    }
+  },
   methods: {
+    async onLoadedData() {
+      if (this.src) {
+        let imgSrc =this.src.replace('giga//', 'giga/')
+        let names = imgSrc.split('/')
+
+        // try{
+        //   this.poster = await transcode({name: names[names.length - 1], src: imgSrc})
+        // } catch(e) {
+        //   console.log(imgSrc, e)
+        // }
+      }
+
+
+      // this.play()
+      //   setTimeout(v => {
+      //     this.pause()
+      //   }, 3000)
+  },
     onImgLoad() {
       this.showed = true
-    },
-    getPoster(src) {
-      // console.log(src)
-      let srcArr = src.split('/')
-      let srcLast = srcArr[srcArr.length - 1]
-      srcLast = srcLast.replace('.mp4', '/frame_3.jpg');
-      // let urlObj = new URL(srcLast)
-      // console.log(srcLast)
-      srcArr[srcArr.length - 1] = `/screen_shots/${srcLast}`
-      return srcArr.join('/')
     },
     play(e) {
       console.log('play', e)
@@ -105,6 +156,17 @@ export default {
       if (v) {
         v.play();
       }
+    },
+    pause(e) {
+      console.log('pause', e)
+      if (this.isPLaying) {
+        this.isPLaying = false
+        let v = document.getElementById(this.videoID)
+        if (v) {
+          v.pause();
+        }
+      }
+
     }
   }
 }

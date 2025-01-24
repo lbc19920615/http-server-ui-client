@@ -602,611 +602,6 @@ import './env.js';
 
 export function createTest() {
 
-    function stdlib() {
-        function defStruct(fun) {
-            let ins = {
-                [fun.name]: function () {
-                    let obj = fun();
-                    Object.defineProperties(obj, {
-                        constructor: {
-                            value: fun,
-                            enumerable: false,
-                            writable: true,
-                            configurable: true,
-                        },
-                    })
-                    if (obj.init) {
-                        obj.init()
-                    }
-                    return obj
-                }
-            }
-
-            return ins[fun.name]
-        }
-
-        let Test = defStruct(
-            function Test() {
-                var prop1 = 1;
-
-                function fun() {
-                    this.prop1 = 8;
-                }
-
-                return {
-                    prop1,
-                    fun
-                }
-            }
-        )
-
-        // console.dir(Test);
-
-        function defObject(fun) {
-            let ins = function () {
-                let obj = fun();
-                return obj
-            }
-
-            return ins()
-        }
-
-        let config = defObject(
-            function config() {
-                var prop1 = 1;
-
-                
-                function some1() {
-                    this.prop1 = 8;
-                }
-
-
-                return {
-                    prop1,
-                    some1
-                }
-            }
-        );
-
-    }
-
-
-    import('http://localhost:7001/public/sta/index/zui.js?v=' + Math.random())
-
-    .then(({ createInstance }) => {
-            /* @vite-ignore */
-
-            let app = document.createElement('div');
-            app.innerHTML = `
-                <div id="app1"></div>
-            `;
-            document.body.appendChild(app)
-
-            let ins = createInstance();
-            let createEle = ins.createEle;
-            let { view1, choose, dynEach, sel, strsel, stylesheet } = ins.useViews();
-            let dom = ins.dom;
-
-            let view2 = ins.defView(function (props) {
-                let div = createEle('div');
-                let dialogId = 'dialog__' + createUUID()
-                let btn = createEle('div');
-                btn.innerHTML = 'btn' + Math.random();
-
-
-
-                let dialog = createEle('dialog')
-
-                dialog.setAttribute('id', dialogId)
-                dialog.addEventListener("close", (e) => {
-                    // console.log(dialog.returnValue)
-                    dialog.innerHTML = ''
-                    if (props?.onclose) {
-                        props.onclose(dialog)
-                    }
-                });
-
-
-
-                div.innerHTML = /*html*/`
-                ${props?.innerHTML ?? ''}
-                `;
-
-                div.appendChild(dialog)
-                div.appendChild(btn);
-                dom.on(btn, 'click', function (e) {
-                    // console.log(this,  e.target.parentElement.querySelector)
-                    // e.target._shadowRoot.getElementById(dialogId).showModal()
-                    dialog.innerHTML = `
-                        <div dialog_content>${props?.dialogHtml ? props.dialogHtml() : ''}</div>
-                    <form method="dialog">
-                   
-                        <button value="returnval">close</button>
-                    </form>
-                `
-                    dialog.showModal();
-                    setTimeout(() => {
-                        if (props?.onshow) {
-                            props.onshow(dialog)
-                        }
-                    })
-                })
-
-                return div;
-            });
-
-            let chartComp;
-
-            setTimeout(() => {
-                let { fetchLog, calcEma } = window.zStockUtils()
-
-                let zchart = ins.defView(function (props = {}) {
-                    let div = createEle('div', props);
-    
-    
-                    div.style.width = '900px';
-                    div.style.height = '700px';
-    
-                    let upColor = '#00da3c';
-                    let downColor = '#ec0000';
-                    let echart;
-    
-                    let userconfig = props?.config ?? {}
-    
-                    div.$update = function ({ symbol = userconfig.symbol } = {}) {
-                        echart?.dispose()
-                        echart = echarts.init(div);
-                        fetchLog({
-                            isEtf: false, searchModel: { symbol: symbol },
-                            onDone({ allklineData = [], allWeekData = [] } = {}) {
-                                let data = allWeekData;
-                                let klinedata = data.map(v => {
-                                    return [v.open, v.close, v.low, v.high]
-                                })
-                                let dates = data.map(v => {
-                                    return dayjs(v.date).format('YYYY/MM/DD')
-                                });
-    
-                                let macdData = window.calcMacd(data);
-                                let kdjData = window.calcKdj(data);
-    
-                                let emaData = calcEma(data);
-    
-                                console.log(emaData)
-    
-                                let startVal = props?.startVal(dates) ?? 0;
-                                let option = {
-                                    animation: false,
-                                    legend: {
-                                        bottom: 10,
-                                        left: 'center',
-                                        data: ['Dow-Jones index', 'upper', 'mid', 'lower', 'macd', 'dif', 'dea', 'k', 'd', 'j', 'ema12', 'ema50']
-                                    },
-                                    tooltip: {
-                                        trigger: 'axis',
-                                        axisPointer: {
-                                            type: 'cross'
-                                        },
-                                        borderWidth: 1,
-                                        borderColor: '#ccc',
-                                        padding: 10,
-                                        textStyle: {
-                                            color: '#000'
-                                        },
-                                        position: function (pos, params, el, elRect, size) {
-                                            const obj = {
-                                                top: 10
-                                            };
-                                            obj[['left', 'right'][+(pos[0] < size.viewSize[0] / 2)]] = 30;
-                                            return obj;
-                                        },
-                                        valueFormatter: (value) => `${value?.toFixed ? value.toFixed(3) : value}`,
-                                        // extraCssText: 'width: 170px'
-                                    },
-                                    axisPointer: {
-                                        link: [
-                                            {
-                                                xAxisIndex: 'all'
-                                            }
-                                        ],
-                                        label: {
-                                            backgroundColor: '#777'
-                                        }
-                                    },
-                                    toolbox: {
-                                        feature: {
-                                            dataZoom: {
-                                                yAxisIndex: false
-                                            },
-                                            brush: {
-                                                type: ['lineX', 'clear']
-                                            }
-                                        }
-                                    },
-                                    brush: {
-                                        xAxisIndex: 'all',
-                                        brushLink: 'all',
-                                        outOfBrush: {
-                                            colorAlpha: 0.1
-                                        }
-                                    },
-                                    visualMap: {
-                                        show: false,
-                                        seriesIndex: 5,
-                                        dimension: 2,
-                                        pieces: [
-                                            {
-                                                value: 1,
-                                                color: downColor
-                                            },
-                                            {
-                                                value: -1,
-                                                color: upColor
-                                            }
-                                        ]
-                                    },
-                                    grid: [
-                                        {
-                                            left: '10%',
-                                            right: '8%',
-                                            height: '43%'
-                                        },
-                                        {
-                                            left: '10%',
-                                            right: '8%',
-                                            top: '50%',
-                                            height: '18%'
-                                        },
-                                        {
-                                            left: '10%',
-                                            right: '8%',
-                                            top: '66%',
-                                            height: '18%'
-                                        }
-                                    ],
-                                    xAxis: [
-                                        {
-                                            type: 'category',
-                                            data: dates,
-                                            boundaryGap: false,
-                                            axisLine: { onZero: false },
-                                            splitLine: { show: false },
-                                            min: 'dataMin',
-                                            max: 'dataMax',
-                                            axisPointer: {
-                                                z: 100
-                                            }
-                                        },
-                                        {
-                                            type: 'category',
-                                            gridIndex: 1,
-                                            data: dates,
-                                            boundaryGap: false,
-                                            axisLine: { onZero: false },
-                                            axisTick: { show: false },
-                                            splitLine: { show: false },
-                                            axisLabel: { show: false },
-                                            min: 'dataMin',
-                                            max: 'dataMax',
-                                        },
-                                        {
-                                            type: 'category',
-                                            gridIndex: 2,
-                                            data: dates,
-                                            boundaryGap: false,
-                                            axisLine: { onZero: false },
-                                            axisTick: { show: false },
-                                            splitLine: { show: false },
-                                            axisLabel: { show: false },
-                                            min: 'dataMin',
-                                            max: 'dataMax',
-                                        }
-                                    ],
-                                    yAxis: [
-                                        {
-                                            scale: true,
-                                            splitArea: {
-                                                show: true
-                                            }
-                                        },
-                                        {
-                                            scale: true,
-                                            gridIndex: 1,
-                                            splitNumber: 2,
-                                            axisLabel: { show: false },
-                                            axisLine: { show: false },
-                                            axisTick: { show: false },
-                                            splitLine: { show: false },
-                                        },
-                                        {
-                                            scale: true,
-                                            gridIndex: 2,
-                                            splitNumber: 2,
-                                            axisLabel: { show: false },
-                                            axisLine: { show: false },
-                                            axisTick: { show: false },
-                                            splitLine: { show: false },
-                                        }
-                                    ],
-                                    dataZoom: [
-                                        {
-                                            type: 'inside',
-                                            xAxisIndex: [0, 1, 2],
-                                            start: startVal,
-                                            end: 100
-                                        },
-                                        {
-                                            show: true,
-                                            xAxisIndex: [0, 1, 2],
-                                            type: 'slider',
-                                            top: '85%',
-                                            start: startVal,
-                                            end: 100
-                                        },
-                                    ],
-                                    series: [
-                                        {
-                                            name: 'Dow-Jones index',
-                                            type: 'candlestick',
-                                            data: klinedata,
-                                            itemStyle: {
-                                                color: upColor,
-                                                color0: downColor,
-                                                borderColor: undefined,
-                                                borderColor0: undefined
-                                            }
-                                        },
-                                        {
-                                            name: 'ema12',
-                                            type: 'line',
-                                            data: emaData.ema12,
-                                            smooth: true,
-                                            showSymbol: false,
-                                            lineStyle: {
-                                                opacity: 0.5
-                                            }
-                                        },
-                                        {
-                                            name: 'ema50',
-                                            type: 'line',
-                                            data: emaData.ema50,
-                                            smooth: true,
-                                            showSymbol: false,
-                                            lineStyle: {
-                                                opacity: 0.5
-                                            }
-                                        },
-                                        {
-                                            name: 'macd',
-                                            type: 'bar',
-                                            data: macdData.macd,
-                                            xAxisIndex: 1,
-                                            yAxisIndex: 1,
-                                            itemStyle: {
-                                                color(e) {
-                                                    // console.log(e)
-                                                    if (e.value < 0) {
-                                                        return upColor
-                                                    }
-                                                    return downColor
-                                                }
-                                            }
-                                        },
-                                        {
-                                            name: 'k',
-                                            type: 'line',
-                                            data: kdjData.k,
-                                            showSymbol: false,
-                                            xAxisIndex: 2,
-                                            yAxisIndex: 2,
-                                            itemStyle: {
-                                                color: '#fd53b8'
-                                            }
-                                        },
-                                        {
-                                            name: 'd',
-                                            type: 'line',
-                                            data: kdjData.d,
-                                            showSymbol: false,
-                                            xAxisIndex: 2,
-                                            yAxisIndex: 2,
-                                            itemStyle: {
-                                                color: '#fff000'
-                                            }
-                                        },
-                                        {
-                                            name: 'j',
-                                            type: 'line',
-                                            data: kdjData.j,
-                                            showSymbol: false,
-                                            xAxisIndex: 2,
-                                            yAxisIndex: 2,
-                                            itemStyle: {
-                                                color: '#3366ff'
-                                            }
-                                        },
-                                    ]
-                                }
-                                echart.setOption(option, true);
-                                // console.log(allklineData)
-                            }
-                        })
-                    }
-    
-                    div.$destory = function () {
-                        // console.log('destory')
-                        echart?.dispose()
-                    }
-    
-                    return div
-                });
-    
-                chartComp = ins.createComp({
-                    setup({ onMount, onUnMount, querySelector }) {
-                        let chartID = 'chart' + createUUID()
-                        onMount(function () {
-                            //    console.dir(querySelector('#chart1') )
-                            querySelector('#' + chartID)?.$update()
-                        })
-    
-                        onUnMount(function () {
-                            querySelector('#' + chartID)?.$destory();
-                        })
-    
-                        return {
-                            chartID
-                        }
-                    },
-                    render(newState, { $set, $get } = {}) {
-                        // console.log($get)
-                        zchart({
-                            id: newState.chartID,
-                            config: {
-                                symbol: '600010'
-                            },
-                            startVal(dates) {
-                                // console.log(dates.length)
-                                return 100 - 30000 / dates.length
-                            }
-                        }, function () {
-    
-                        })
-                    }
-                });
-    
-
-            }, 1000)
-            // console.log(shourcutmap)
-            // ins.createCss({
-            //     render() {
-            //         stylesheet({
-            //             mode: 'simple',
-            //         },
-            //             function () {
-            //                 strsel`.cls`({
-            //                     '$varname': 180,
-            //                     '$defname': 180,
-            //                     'w': 'calc($varname(10px) * 2)',
-            //                     'h': '$defname'
-            //                 }, () => {
-            //                     // sel(['&:hover', {
-            //                     //     '$varname': 180,
-            //                     //     width: '$varname',
-            //                     // }]);
-
-            //                     strsel`&:hover`({
-            //                         '$varname': 180,
-            //                         width: '$varname',
-            //                     })
-
-            //                     // sel(['.child', {
-            //                     // }])
-
-            //                     strsel`.sdsd`({
-
-            //                     })
-
-            //                 });
-
-            //                 strsel`@media (width > 600px)`({}, function () {
-            //                     strsel`.cls`({
-            //                         width: 180,
-            //                     }, function () {
-            //                         strsel`&:hover`({
-            //                             '$varname': 180,
-            //                         })
-
-            //                         strsel`.sdsd`({
-
-            //                         })
-            //                     });
-            //                 });
-            //             }
-            //         );
-            //     }
-            // }).then(({ styles = [], cssArr = [] } = {}) => {
-            //     console.log(styles, cssArr)
-            // })
-
-            let mainComp = ins.createComp({
-                setup() {
-                    let str = 'hello';
-                    let num = 1;
-                    let arr = [1, 2, 3];
-                    function somefun() {
-                        console.log(this)
-                    }
-                    return {
-                        str,
-                        num,
-                        arr,
-                        somefun
-                    }
-                },
-                render(state, { $set, element, ...funcs } = {}) {
-                    // console.log(state, $set, funcs);
-                    view1({
-                        template: `div2 #{str} #{num}`,
-                        onclick() {
-                            $set('num', v => v + 1);
-                            $set('arr', v => {
-                                // console.log(v)
-                                v[0] = Math.random()
-                                return v
-                            })
-                        }
-                    }, function () {
-                    });
-
-                    view1({}, function () {
-                        choose({
-                            cases: {
-                                '#{num} > 1': function () {
-                                    // console.log('ssss')
-                                    view1({
-                                        innerHTML: 'num > 1 ' + Math.random()
-                                    })
-                                },
-                                '#{num} < 2': function () {
-                                    view1({
-                                        innerHTML: 'num < 2 ' + Math.random()
-                                    })
-                                }
-                            }
-                        });
-
-                        dynEach({
-                            valpath: 'arr',
-                            create(item, index) {
-                                view1({
-                                    template() {
-                                        return `${index} ` + Math.random()
-                                    }
-                                })
-                            }
-                        })
-
-                    })
-
-                    view2({
-                        classList: ['test_sub1'],
-                        dialogHtml() {
-                            return '<div id="dialogapp"></div>'
-                        },
-                        onshow(dialog) {
-                            console.log(dialog)
-                            chartComp.mount(dialog.querySelector('#dialogapp'))
-                        },
-                        onclose(dialog) {
-                        }
-                    });
-
-                }
-            });
-
-   
-            mainComp.mount(app.querySelector('#app1'));
-        });
 
         
         function isNumeric(n) {
@@ -1514,9 +909,10 @@ export function createTest() {
             let funname = '';
             let funprev = '';
             let funargs = '';
-            name.replace(/([\w_]*)\s*([\w]*)\(/, function(match, p1, p2) {
+            name.trim().replace(/^([\w_]*)\s*([\w]*)\(/g, function(match, p1, p2) {
                 funname = p1.trim();
-                if (p2) {
+                console.log('funname', funname)
+                if (p2 && funname) {
                     funname = p1 + ' ' + p2;
                 }
                 funprev = match
@@ -1671,7 +1067,7 @@ export function createTest() {
             function getPropObj(funargs = '') {
                 let props = {};
                 let proparr = funargs.split('#');
-                console.log(funargs)
+                // console.log(funargs)
                 proparr.map(v => {
                     let arr = v.split('=').map(v => v.trim());
                     // console.log(v, arr)
@@ -1736,6 +1132,7 @@ export function createTest() {
                 else {
                     let funreg = /\(([^)]*)\)/g;
                     let left = leftval.trim();
+         
                     if (decs[1] && !funreg.test(caclstr)) {
                         let right = decs[1].trim().replace(/;$/, '');
                         let p = [];
@@ -1745,13 +1142,63 @@ export function createTest() {
                         return p;
                     }
                     else {
+                        if (decs[1] && leftval) {
+                            let right = decs[1].trim().replace(/;$/, '');
+                            console.log(right)
+
+                            let callfunreg = /([\w_]*)\s*\(([^\)]*)\)/g;
+                            
+                            let valname = '';
+                            let funargs = '';
+                            right.replace(callfunreg, function(match, p1, p2) {
+                                valname = p1;
+                                funargs = p2;
+                            });
+
+
+                            console.log(valname)
+                            let p = [];
+                            p.push('__init');
+                            p.push([left, valname, []]);
+                            return p;
+                        }
+
+                        let buildfunnames = ['console'];
                         let {funname, funargs} = parseFunLike(caclstr);
-                        let propobj = getPropObj(funargs);
-                        let p = [];
-                        p.push('__call');
-                        let arr = [funname, propobj]
-                        p.push(arr);
-                        return p;
+                        console.log('call fun', funname + ' ', funargs)
+                        if (funname) {
+                            let propobj = getPropObj(funargs);
+                            let p = [];
+                            p.push('__call');
+                            let arr = ['', funname, propobj]
+                            p.push(arr);
+                            return p;
+                        }
+                        else {
+                            let callfunreg = /([\w_]*)\s*\[([^\]]*)\]\s*\(([^\)]*)\)/g;
+                            
+
+                            let objname = '';
+                            let valname = '';
+                            let funargs = '';
+                            caclstr.replace(callfunreg, function(match, p1, p2, p3) {
+                                objname = p1;
+                                valname = p2;
+                                funargs = p3;
+                            });
+                            let args = funargs.split('#').map(v => v.trim());
+
+                            let codename = '__call';
+                            if (buildfunnames.includes(objname)) {
+                                codename = '__callglobal'
+                            }
+
+                            let p = [];
+                            p.push(codename);
+                            p.push([`${objname}.${valname}`, args])
+                            return p;
+                        }
+              
                     }
         
                 }
@@ -1804,7 +1251,7 @@ export function createTest() {
                     if (option.level < 1) {
                      
                         getfunprops(cssrule,  context.curFunCtx.codes)
-                        console.log(cssrule,  context.curFunCtx)
+                        // console.log(cssrule,  context.curFunCtx)
                     }
             
     
@@ -1841,6 +1288,13 @@ export function createTest() {
                         let funafter = name.replace(funprev, '');
                         funargs = funafter.slice(0, funafter.length - 1)
                         // console.log(name, funname, funargs)
+
+                        name.replace(/object\s*([^{\s]*)/g, function(match, p1) {
+                            funname = 'object';
+                            funargs = p1;
+                        })
+
+
                         if (funname === 'if') {
                             let funuuid = 'switch__if__' + createUUID();
                             switchs.push([
@@ -1853,6 +1307,45 @@ export function createTest() {
                             context?.setFun(funuuid, funCtx)
                             
                             console.log(cssrule, codes, funCtx)
+                        }
+                        else if (funname === 'object') {
+                            let funuuid = 'object__' + createUUID();
+                            let funCtx = createFunCtx(funuuid);
+                            getfunprops(cssrule, funCtx.codes)
+                            // console.log(cssrule)
+                            if (cssrule?.context?.styles) {
+                                // console.log(funCtx)
+                                cssrule?.context?.styles.forEach(style => {
+                                    let customfunreg = /fun\s*(.*)\(([^)]*)\)/g;
+                                    if (customfunreg.test(style.name)) {
+                                        
+                                        let registerFunName = '';
+                                        let registerargs = '';
+                                        style.name.replace(customfunreg, function(match, p1, p2) {
+                                            registerFunName = p1;
+                                            registerargs = p2;;
+                                        });
+                                        console.log('ssssssssssssss', style, registerFunName)
+                                        if (registerFunName) {
+                                            let method_funuuid = 'method__' + createUUID();
+                                            let funCtx1 = createFunCtx(method_funuuid);
+                                            getfunprops(style, funCtx1.codes);
+                                            context?.setFun(method_funuuid, funCtx1)
+                                            // console.log(registerFunName)
+                                            funCtx.codes.push([
+                                                '__setFun', [method_funuuid, registerFunName]
+                                            ])
+                                        }
+                                    }
+                                })
+                            }
+                            context?.setFun(funuuid, funCtx);
+
+                            if (context?.parent?.codes) {
+                                context.parent.codes.push([
+                                    '__object', [funuuid, funargs]
+                                ]);
+                            }
                         }
                         else if (funname === 'else if' || name.trim().startsWith('else if')) {
                             let funuuid = 'switch__elif__' + createUUID();
@@ -1914,7 +1407,7 @@ export function createTest() {
                             }
                         }
                         else {
-                            let customfunreg = /fun\s(.*)/g;
+                            let customfunreg = /fun\s*(.*)/g;
                             if (customfunreg.test(funname)) {
                                 let registerFunName = '';
                                 funname.replace(customfunreg, function(match, p1) {
@@ -1973,7 +1466,7 @@ export function createTest() {
                              
                                 let p = [];
                                 p.push('__call');
-                                let arr = [funname, propobj]
+                                let arr = ['', funname, propobj]
                                 p.push(arr);
                              
                                 // console.log(p)
@@ -1998,7 +1491,7 @@ export function createTest() {
             //     return context.getretturn(p1)
             // })
 
-            let fanyiarr = ret.styles.slice(ret.styles.length - 2, ret.styles.length)
+            let fanyiarr = ret.styles.slice(1, ret.styles.length)
             stringify2(fanyiarr, context, {level: 0});
             console.log(fanyiarr, context.programs);
             let v = document.querySelector('#out')
@@ -2502,7 +1995,7 @@ export function createTest() {
             }
             else {
                 let ret = run()
-                console.log(input, ret, tasks)
+                // console.log(input, ret, tasks)
                 return ret
             }
 
@@ -2559,6 +2052,7 @@ export function createTest() {
 
     function precontext(codecache = {}, {main} = {}) {
 
+        let { defStruct, defObject } = window.stdlib();
 
         /**
          * 
@@ -2611,6 +2105,7 @@ export function createTest() {
             },
             obj: {},
             console,
+            __$isFunCtx: true
         };
         window.__globalcontext = globalcontext
 
@@ -2691,16 +2186,37 @@ export function createTest() {
             }
         }
 
-        function updateCtxVal(ctx = {}, key, val) {
-            if (typeof ctx[key] === 'undefined') {
-                if (ctx.__$parent) {
-                    updateCtxVal(ctx.__$parent, key, val)
-                }
+        function __createFun(somfunuuid) {
+            let cache = codecache[somfunuuid];
+            if (cache) {
+                return  createCodeFun(cache, somfunuuid)
             }
             else {
-                ctx[key] = val
+                return null
             }
         }
+        
+        function setCtxVal(ctx = {}, key, val) {
+            if (ctx.__$isFunCtx) {
+                ctx[key] = val
+            }
+            else {
+                if (ctx.__$parent) {
+                    setCtxVal(ctx.__$parent, key, val)
+                }
+            }
+        }
+
+        // function updateCtxVal(ctx = {}, key, val) {
+        //     if (typeof ctx[key] === 'undefined') {
+        //         if (ctx.__$parent) {
+        //             updateCtxVal(ctx.__$parent, key, val)
+        //         }
+        //     }
+        //     else {
+        //         ctx[key] = val
+        //     }
+        // }
 
         /**
          * 
@@ -2708,7 +2224,7 @@ export function createTest() {
          * @param {*} uuid 
          * @returns 
          */
-        function createCodeFun(cache, uuid = '') {
+        function createCodeFun(cache, uuid = '', {cusctx} = {}) {
             /**
              * obj[p1.p8]
              */
@@ -2719,9 +2235,12 @@ export function createTest() {
                     /**
                      * @type {{}}
                      */
-                    let ctx = {...getprops(uuid), __funuuid: uuid};
+                    let ctx = {...getprops(uuid), __funuuid: uuid, __$isFunCtx: true};
 
                     ctx.__$parent = outctx;
+                    if (cusctx) {
+                        ctx = cusctx
+                    }
 
       
                     if (cache.codes) {
@@ -2734,7 +2253,7 @@ export function createTest() {
                                 let [funname, funargs] = code;
 
                                 if (funname === '__setCtx') {
-                                    // console.log('sssssssssssssssssss', funname, funargs)
+                                    console.log('sssssssssssssssssss', ctx, funname, funargs)
                                     let [valpath, valcond] = funargs;
                                     let parsedvalcond = parseCondFun(ctx, valcond);
                                     
@@ -2764,7 +2283,7 @@ export function createTest() {
                                     else {
                                         let parsedvalcond = parseCondFun(ctx, valcond);
                                         let ret = preevals(ctx, parsedvalcond)
-                                        updateCtxVal(ctx, valpath, ret)
+                                        setCtxVal(ctx, valpath, ret)
                                     }
                  
                                     // console.log('__update', ctx, valpath, parsedvalcond)
@@ -2790,17 +2309,101 @@ export function createTest() {
                                     let [funuuid] = funargs;
                                     __registerFun(ctx, funuuid);
                                 }
-                                else if (funname === '__call') {
-                                    console.log(funname, funargs, codecache)
-                                    let truename = funargs[0];
-                                    let praargs = funargs.slice(1);
-                                    console.log(praargs)
-                                    let fun = getCtxVal(ctx, truename);
-                                    if (fun && fun.__funuuid) {
-                                        globalcontext.__runFun(ctx, fun.__funuuid, praargs, {debugflag: '__call'})
-                                        
+                                else if (funname === '__callglobal') {
+                                    console.log('__callglobal', funargs)
+                                    let valpath = funargs[0];
+                                    let args = parseCtxArgs(outctx, funargs[1])
+
+                                    // console.log(args)
+                                    
+                                    let fun = getObj(globalcontext, valpath)
+                                    if (fun) {
+                                        fun.apply(null, args)
                                     }
-                                    // globalcontext.__runFun()
+                                }
+                                else if (funname === '__call') {
+                                    console.log('__call', funname, funargs, codecache)
+                                    let thisobjp = funargs[0];
+                                    let truename = funargs[1];
+                                    let praargs = funargs.slice(2);
+                   
+                                    let callctx = ctx;
+                                    if (thisobjp) {
+                                        callctx = ctx[thisobjp]
+                                    }
+                                    let fun = getCtxVal(callctx, truename);
+                                    // console.log(fun, ctx, thisobjp)
+                      
+
+                                    if (fun) {
+                                        console.log('callctx', callctx)
+                                        globalcontext.__runCusFun(fun, callctx,  praargs, {debugflag: '__call ' + thisobjp})
+                                    }
+                                }
+                                else if (funname === '__setFun') {
+//   console.log(funname, funargs, codecache, ctx, outctx);
+                                    let funuuid = funargs[0];
+                                    let valname = funargs[1];
+                                    let innerCtx = {};
+                                    innerCtx.__$parent = ctx;
+                                    let cache = codecache[funuuid];
+
+                                    let fun =  createCodeFun(cache, funuuid, {cusctx: innerCtx})
+                                    // setCtxVal(innerCtx, valname, fun)
+                                    ctx[valname] = fun
+                                }
+                                else if (funname === '__struct') {
+                                    let funuuid = funargs[0];
+                                    let valname = funargs[1];
+                                    let innerCtx = {};
+                                    innerCtx.__$parent = ctx;
+                                    let cache = codecache[funuuid]
+                                    let fun =  createCodeFun(cache, funuuid, {cusctx: innerCtx})
+
+                                    await globalcontext.__runCusFun(fun, ctx, [])
+
+                                    console.log('__struct', funargs, ctx, innerCtx)
+                                    let obj = defStruct({
+                                        [valname]: function() {
+                                            return innerCtx
+                                        }
+                                    });
+
+                                    setCtxVal(ctx, valname, obj)
+                                }
+                                else if (funname === '__init') {
+                                    let valname = funargs[0];
+                                    let structname = funargs[1];
+                                    let valargs = funargs[2];
+                                    console.log('__init', structname, valargs, ctx);
+                                    if (typeof ctx[structname] === 'function') {
+                                        let obj = ctx[structname].apply(null, valargs);
+                                        // console.log(obj)
+                                        // ctx[valname] = obj
+                                        setCtxVal(ctx, valname, obj)
+                                    }
+                                }
+                                else if (funname === '__object') {
+
+                                    // console.log(funname, funargs, codecache);
+                                    let funuuid = funargs[0];
+                                    let valname = funargs[1];
+                                    let innerCtx = {};
+                                    innerCtx.__$parent = ctx;
+                                    let cache = codecache[funuuid]
+                                    let fun =  createCodeFun(cache, funuuid, {cusctx: innerCtx})
+
+                                    await globalcontext.__runCusFun(fun, ctx, [])
+
+                                    console.log('__object', ctx, innerCtx)
+
+                                    let obj = defObject({
+                                        value: function() {
+                                            return innerCtx
+                                        }
+                                    });
+
+                                    setCtxVal(ctx, valname, obj)
                                 }
                                 else {
                                     // console.log(funname)
@@ -2861,11 +2464,14 @@ export function createTest() {
             return parseargs(args).map(v => {
                 if (typeof v === 'string') {
                   if (!v.includes('"')) {
-                     let ret = getCtxVal(outercontext, v);
-                     if (typeof ret === 'undefined') {
-                         return v
-                     }
-                     return ret
+                    if (v === 'this') {
+                        return outercontext
+                    }
+                    let ret = getCtxVal(outercontext, v);
+                    if (typeof ret === 'undefined') {
+                        return v
+                    }
+                    return ret
                   }
                 }
                 return v
@@ -3031,6 +2637,16 @@ export function createTest() {
         globalcontext.__registerFun = function(ctx, somfunuuid, customname) {
             __registerFun(ctx, somfunuuid, customname)
         }
+
+        globalcontext.__runCusFun = async function(fun, ctx, args = [], {customname, debugflag = ''} = {}) {
+            if (fun) {
+                await fun?.apply(null, [ctx, ...args]);
+            }
+            else {
+                console.log('__runCusFun err')
+            }
+        }
+
         async function runFun( outercontext = {}, funnameuuid = '', args = [],  {customname, debugflag = ''} = {}) {
             let innercontext = {};
             innercontext.__$parent = outercontext;
@@ -3055,23 +2671,24 @@ export function createTest() {
                 let cache = codecache[funnameuuid];
                 let funcname = customname ?? cache.name;
                 let fun = getCtxVal(innercontext, funcname);
-                // console.log(fun)
                 await fun?.apply(null, [innercontext, ...args]);
                 // console.log( debugflag +` call runfun ${funcname} end`)
 
             }
+            // return outercontext
   
         }
         globalcontext.__runFun= runFun;
 
-        globalcontext.__run = function(funuuid, option = {}) {
-            globalcontext.__registerFun(globalcontext, funuuid);
-            globalcontext.__runFun(globalcontext, funuuid, [], option)
+        let runmain = async function(ctx = globalcontext, funuuid, option = {}) {
+            // globalcontext.__registerFun(ctx, funuuid);
+            let fun = __createFun(funuuid);
+            globalcontext.__runCusFun(fun, ctx, [], option)
         }
 
         
         if (main) {
-            globalcontext.__run(main,  {debugflag: 'main'})
+            runmain(globalcontext, main,  {debugflag: 'main'})
         }
 
 
@@ -3085,19 +2702,22 @@ export function createTest() {
             name: 'mainfun',
             codes: [
                 ['__registerFun', ['somfunuuid']],
+                ['__struct', ['structfunuuid', 'HashSet']],
+                ['__init', [ 'obj', 'HashSet', []]],
+                ['__object', ['objfunuuid', 'config']],
                 ['__update', ['obj[p1.p8]', '18']],
-                ['__call', ['somefun', {}]],
-                // ['__runFun', ['somfunuuid', [], {debugflag: 'somefun'}]],
-                ['__runloop', ['arr', 'loop1blockuuid']],
-                ['__runFun', [ 'console.log', [`"main outer"`, 'outer']]],
-                ['__switch', [
-                    ['8 > 1', 'cond1blockuuid']
-                ]],
-    
-                ['__switch', [
-                    ['1 > 8', 'cond1blockuuid'],
-                    ['default', 'cond8blockuuid']
-                ]]
+                ['__call', ['', 'somefun', {}]],
+                ['__call', ['config', 'fun_some', {}]],
+                ['__call', ['obj', 'fun_some', {}]],
+                // ['__runloop', ['arr', 'loop1blockuuid']],
+                // ['__switch', [
+                //     ['8 > 1', 'cond1blockuuid']
+                // ]],
+
+                // ['__switch', [
+                //     ['1 > 8', 'cond1blockuuid'],
+                //     ['default', 'cond8blockuuid']
+                // ]]
             ],
             props: function() {
                 return {
@@ -3106,12 +2726,58 @@ export function createTest() {
                 }
             }
         },
+        ['structfunuuid']: {
+            name: '__struct_def',    
+            codes: [
+                ['__callglobal', [ 'console.log', [`"struct outer"`]]],
+                ['__setCtx', ['name', `"struct"`]],
+                ['__setFun', ['struct_sub1uuid', 'fun_some']],
+            ],
+            props:  function() {
+                return {
+                }
+            }
+        },
+        ['struct_sub1uuid']: {
+            name: 'fun_some',    
+            codes: [
+                ['__callglobal', [ 'console.log', [`"struct call"`, 'this']]]
+            ],
+            props:  function() {
+                return {
+                    inner: 'some'
+                }
+            }
+        },
+        ['objfunuuid']: {
+            name: '__obj_def',    
+            codes: [
+                ['__callglobal', [ 'console.log', [`"obj outer"`]]],
+                ['__setCtx', ['name', `"some"`]],
+                ['__setFun', ['obj_sub1uuid', 'fun_some']],
+            ],
+            props:  function() {
+                return {
+                }
+            }
+        },
+        ['obj_sub1uuid']: {
+            name: 'fun_some',    
+            codes: [
+                ['__callglobal', [ 'console.log', [`"obj call"`, 'some']]]
+            ],
+            props:  function() {
+                return {
+                    inner: 'some'
+                }
+            }
+        },
         ['somfunuuid']: {
             name: 'somefun',    
             codes: [
                 // ['__setCtx', ['outer', `"some"`]],
                 ['__update', ['outer', `"some change"`]],
-                ['__runFun', [ 'console.log', [`"some outer"`, 'outer']]]
+                ['__callglobal', [ 'console.log', [`"some outer"`, 'outer']]]
             ],
             props:  function() {
                 return {
@@ -3124,7 +2790,7 @@ export function createTest() {
             valname: 'val',
             codes: [
             //  ['__setCtx', ['outer', `"some"`]],
-                ['__runFun', [ 'console.log', ['key','val']]],
+                ['__callglobal', [ 'console.log', ['key','val']]],
                 ['__switch', [
                     ['key > 0', 'condlblockuuid']
                 ]],
@@ -3134,23 +2800,25 @@ export function createTest() {
         ['cond1blockuuid']: {
             name: 'cond1fun',
             codes: [
-                ['__runFun', [ 'console.log', [`"cond1"`]]]
+                ['__callglobal', [ 'console.log', [`"cond1"`]]]
             ],
         },
         ['cond8blockuuid']: {
             name: 'cond1fun',
             codes: [
-                ['__runFun', [ 'console.log', [`"cond8"`]]]
+                ['__callglobal', [ 'console.log', [`"cond8"`]]]
             ],
         },
         ['condlblockuuid']: {
             name: 'cond8fun',
             codes: [
-                ['__runFun', [ 'console.log', [`"condl"`]]],
+                ['__callglobal', [ 'console.log', [`"condl"`]]],
                 ['__break', []]
             ],
         }
     }
 
-    precontext(cssstyles, {main: 'mainfunuuid'})
+    setTimeout(() => {
+        // precontext(cssstyles, {main: 'mainfunuuid'})
+    }, 300)
 }

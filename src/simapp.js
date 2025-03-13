@@ -1497,7 +1497,6 @@ export function createTest() {
             let v = document.querySelector('#out')
 
             if (v) {
-                // v.value     = SimplyBeautiful().js(p).replace('async\n', 'async ')      
                 setTimeout(() => {
                     v.value     = JSON5.stringify(  context.programs, function(key, val) {
                         if (key === 'props') {

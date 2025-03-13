@@ -16,169 +16,48 @@
     <link rel="stylesheet" href="element-plus.css" />
     <script src="/echarts.js"></script>
     <script src="/dayjs.min.js"></script>
-    <script src="/simply-beautiful.js"></script>
-    <script src="https://unpkg.com/xregexp/xregexp-all.js"></script>
+    <script src="/xregexp-all.js"></script>
     <!-- <script src="https://unpkg.com/scheduler-polyfill@next"></script> -->
+    <script type="module" src="/demos/shadow/index.js"></script>
     <script src="/assets/ffmpeg/package/dist/umd/ffmpeg.js"></script>
     <script src="/assets/util/package/dist/umd/index.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.12/plugin/quarterOfYear.min.js" integrity="sha512-pWtHtIgIdv64mVaEbh1ACEvfsrMvdSuJ7xGLzm3s1LiSPyA2pGit3cjTBHvFQCkXoX2r9drLdcfAP7C8eGbBTQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.12/plugin/weekOfYear.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.13/plugin/quarterOfYear.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.13/plugin/weekOfYear.js"></script>
     <script>
         window.dayjs.extend(window.dayjs_plugin_quarterOfYear);
         window.dayjs.extend(window.dayjs_plugin_weekOfYear);
-
     </script>
     <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css"> -->
-    <style>
-        .con {
-            margin-top: 30px;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .tool {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            align-items: center;
-        }
-        .row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        @media screen and (max-width: 720px) {
-            .tool { 
-                grid-template-columns: 1fr ;
-            }
-            .mobile-hide {
-                display: none;
-            }
-        }
-        .vis-viewer .el-slider__input {
-            width: 160px;
-        }
-        .vis-loading .img1 img {
-            opacity: 1 !important;
-
-            transition: none !important;
-        }
-
-        .vis-loading .img2 img {
-            opacity: 0 !important;
-            transition: none !important;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            align-items: center;
-        }
-
-        .juz {
-            display: flex;
-            align-items: center;
-        }
-
-        .juz__item {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 30px;
-            height: 30px;
-        }
-
-        @media screen and (max-width: 720px) {
-            .grid {
-                grid-template-columns: 1fr 1fr 1fr;
-            }
-            
-        }
-
-        textarea {
-  width: 600px;
-  display: block;
-  height: 300px;
-}
-    </style>
+    <link rel="stylesheet" href="./index.css">
 </head>
 <body class="doc-darktheme">
 
-<template id="str3">
-    struct HashSet {
-        var prop1 = 1;
-        var prop8 = 8;
-        fun init() {
-           console.log('init');
-        }
-        var mid1 = 1;
-        var mid8 = 8;
-        fun some(p1) {
-           this.prop1 = 1;
-           this.prop8 = 8;
-        }
-     }
-     
-     object config {
-         var prop1 = 1;
-         var prop8 = 8;
-         fun some(p1) {
-             this[prop1] = 1;
-             this[prop8] = 8;
-         }
-     }
-    
-     fun fun1(name = '') {
-     }
-    
-     async fun main() {
 
-        var num = 1;
-        var arr = [1,2,3];
-        var callfun = fun1();
-
-        fun inner() {
-            var num = 1;
-        }
-
-        var aft = num + 1;  
-        sum = num + 1;  
-        obj[p1.p2.p3] = num + 1;
-        console[log]("sssss" # 18);
-        hashset = HashSet();
-
-        if (sum > 1) {
-            sum = 3;
-        }
-        else if(lt(sum, 8)) {
-            sum = 6;
-        }
-        else {
-            sum = 18;
-        }
-    
-        each ([key,item] in arr) {
-            var localval = 1;
-        }
-        
-        inner(p1 = 1 # p8 = 8);
-
-        fun done1() {
-        }
-
-        req() {(res # iserr) ->
-            var some = 1;
-        }
-
-        req(err = done1) {(res # iserr) ->
-            var some = 1;
-        }
-
-    }
-    
-    </template>
     <textarea id="out" style="display: none;"></textarea>
 
-   <div id="tpl" style="display: none"></div>
+    <template id="z-list_tpl">
+        <div bind:click="onclick">
+            <slot name="content"></slot>
+        </div>
+    </template>
+
+    <template id="z-list-item_tpl">
+        <div>
+            <slot></slot>
+        </div>
+    </template>
+
+    <div id="webapp">
+        <z-list  size ="1">
+            <template shadowrootmode="open">
+                <slot name="content"></slot>
+            </template>
+            <div slot="content">hello</div>
+        </z-list>
+    </div>
+
+    <div id="tpl" style="display: none"></div>
     <div id="app">
         <router-view></router-view>
     </div>
@@ -206,14 +85,87 @@
       </div>
     </template>
     
+    <template id="str3">
+        struct HashSet {
+            var prop1 = 1;
+            var prop8 = 8;
+            fun init() {
+               console.log('init');
+            }
+            var mid1 = 1;
+            var mid8 = 8;
+            fun some(p1) {
+               this.prop1 = 1;
+               this.prop8 = 8;
+            }
+         }
+         
+         object config {
+             var prop1 = 1;
+             var prop8 = 8;
+             fun some(p1) {
+                 this[prop1] = 1;
+                 this[prop8] = 8;
+             }
+         }
+        
+         fun fun1(name = '') {
+         }
+        
+         async fun main() {
+    
+            var num = 1;
+            var arr = [1,2,3];
+            var callfun = fun1();
+    
+            fun inner() {
+                var num = 1;
+            }
+    
+            var aft = num + 1;  
+            sum = num + 1;  
+            obj[p1.p2.p3] = num + 1;
+            console[log]("sssss" # 18);
+            hashset = HashSet();
+    
+            if (sum > 1) {
+                sum = 3;
+            }
+            else if(lt(sum, 8)) {
+                sum = 6;
+            }
+            else {
+                sum = 18;
+            }
+        
+            each ([key,item] in arr) {
+                var localval = 1;
+            }
+            
+            inner(p1 = 1 # p8 = 8);
+    
+            fun done1() {
+            }
+    
+            req() {(res # iserr) ->
+                var some = 1;
+            }
+    
+            req(err = done1) {(res # iserr) ->
+                var some = 1;
+            }
+    
+        }
+        
+        </template>
 
-<!--    <script src="https://cdn.bootcdn.net/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>-->
+    <script src="https://cdn.bootcdn.net/ajax/libs/js-beautify/1.15.1/beautifier.js"></script>
     <!-- Import Vue 3 -->
     <script src="/Vue.js"></script>
     <script src="/vue-router.js"></script>
-    <script src="/vue-demi.js"></script>
-    <script src="/pinia.js"></script>
-    <script src="/element-plus.js"></script>
+    <!-- <script src="/vue-demi.js"></script> -->
+    <!-- <script src="/pinia.js"></script> -->
+    <!-- <script src="/element-plus.js"></script> -->
 
     <script type="module" src="/src/main.js"></script>
     <script src="/jquery.js"></script>

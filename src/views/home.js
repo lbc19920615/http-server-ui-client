@@ -1,24 +1,9 @@
-import { computed, getCurrentInstance, onMounted, reactive, ref } from "vue";
-import { html } from "../lib"
-import { createTest } from "../simapp";
+// import { createTest } from "../simapp";
 
+import "../suanfa";
+import "../web";
 
-
-const { defineStore, storeToRefs } = Pinia;
-const useCounterStore = defineStore('counter', {
-    state: () => ({ count: 0, name: 'Eduardo' }),
-    getters: {
-        doubleCount: (state) => state.count * 2,
-    },
-    actions: {
-        increment() {
-            this.count++
-        },
-    },
-})
-
-
-createTest()
+// createTest()
 
 export default {
     template: '#home-tpl',
@@ -28,13 +13,13 @@ export default {
         };
     },
     mounted() {
+        const {reactive, ref } = Vue;
 
 
         window.defComAndReloadCurPage('home-form',
             {
-                template: html`
-    
-
+                template: /*html*/`
+                
                 <div @click="handleClick(key)"
                 :class="{'current-link': key == activeName }"
                 :label="key" :name="key"  v-for="links,key in items">
@@ -42,7 +27,7 @@ export default {
                 </div>
 
 
-                <div class="grid">
+                <div class="grid" style="max-height: 300px; overflow: auto">
                     <div v-for="item,item_key in curlinks" :class="{'current-link': item == state.item }"> 
                         {{item}} {{item_key}}
                         <button @click="loadFolder(item)">加载</button>
@@ -51,21 +36,34 @@ export default {
         
 
                 <div v-if="state.hasFolder">   
-                    <div class="row">
-                        <el-button @click="prevFolder(item)">prev</el-button>
-                        <el-button  @click="nextFolder(item)">next</el-button>
-                        <input id="input1" type="number"  style="width: 18vw;" />
-                        <el-button @click="jumpFolder(item)">jump</el-button>
-                        <div>{{state.index}}/{{state.data.length}}</div>
-                    </div>
-                    <div>
-                        <img style="max-width: 100%;" :src="getImgHref(state.index)">
-                        <div>{{getDoc()}}</div>
-                    </div>
+
+
+                    <image-slideshow interval="3000000">
+
+                    <template v-for="(item, index) in state.data" >
+                        <img 
+                        v-if="index < 3"
+                        :src="getImgHref(index + 1)"
+                       >
+                        
+                        <img 
+                        v-else
+                        :srcres="getImgHref(index + 1)"
+                        >       
+                    </template>
+          
+                    
+                    </image-slideshow>
+            
                 </div>
                 `,
 
+                mounted() {
+                    console.log(this.items.default)
+                    this.handleRemote(this)
+                },
                 setup() {
+                    const wlanip = __ips__[0]
 
                     window.appendStyle(`
                         .current-link {
@@ -235,22 +233,37 @@ export default {
                     }
 
 
+                    let defshots =  [
+                        '118820919',
+                        '120643542',
+                        '121104225',
+                        '116826766',
+                        '120867545',
+                        '118309975',
+                        '121175718',
+                        '121161242',
+                        '120673202',
+                        '121808271',
+                        '121841160',
+                        '122226362',
+                        '122344378',
+                        '122792374',
+                        '123001460',
+                        '123070132',
+                        '123185432',
+                        '123322753',
+                        '123397254',
+                        '123466002',
+                        '124337625',
+                        '124067679',
+                        '124680882',
+                        '126181032',
+                        '126301620',
+                        '126489458'
+                    ].map(v => 'a_' + v);
 
-                    const store = useCounterStore()
-                    const { name, doubleCount } = storeToRefs(store);
-                    const { increment } = store;
                     let items = ref({
-                        'default': [
-                            '118820919',
-                            '120643542',
-                            '121104225',
-                            '116826766',
-                            '120867545',
-                            '118309975',
-                            '121175718',
-                            '121161242',
-                            '120673202'
-                        ].map(v => 'a_' + v),
+                        'default': defshots,
                         'fanbox_1': [
                             '1775862',
                             '1829683',
@@ -370,7 +383,18 @@ export default {
                             '8216382',
                             '8270796',
                             '8316916',
-                            '8403387'
+                            '8403387',
+                            '8433624',
+                            '8480489',
+                            '8519711',
+                            '8556189',
+                            '8568922',
+                            '8568927',
+                            '8726044',
+                            '8761186',
+                            '8803066',
+                            '8844327',
+                            '8878490'
                         ].map(v => 'a_' + v),
                         '22500825/series/89560': [
                             'a_91758958',
@@ -417,10 +441,37 @@ export default {
 
                     let activeName = ref(Object.keys(items.value)[0])
 
+                    function handleRemote(context) {
+                        
+                      if (!state.remote) {
+                        fetch(`http://${wlanip}:3000/get_screen_shots`).then(v => {
+                            return v.json()
+                        }).then(v => {
+                            console.log(v)
+                            if (v && v.list) {
+                                v.list.forEach(item => {
+                                    context.items.default.push(
+                                        item
+                                    );
+                                    console.log(item)
+                                });
+                        
+                                state.change = false;
+                                setTimeout(() => {
+                                    context.$forceUpdate();
+                                    state.change = true;
+                                    state.remote = true;
+                                }, 300)
+                            }
+                        })
+                      }
+                    }
+
                     function handleClick(key) {
                         activeName.value = key
                         state.change = false;
-                        curlinks.value = getLinks()
+                        curlinks.value = getLinks();
+
                         setTimeout(() => {
                             this.$forceUpdate();
                             state.change = true;
@@ -433,8 +484,8 @@ export default {
                         index: 1,
                         item: null,
                         num: 1,
-
                         change: true,
+                        remote: false,
                         data: {},
                     })
 
@@ -452,11 +503,11 @@ export default {
 
                     async function loadFolder(item) {
                         console.log(this)
-
+                        state.hasFolder = false;
                         try {
-                            let res = await fetch(`http://192.168.2.64:3000/data/${item}/config.json`)
+                            let res = await fetch(`http://${wlanip}:3000/data/${item}/config.json`)
                             console.log(res)
-                            if (res.status == 200) {
+                            if (res.status === 200) {
                                 let json = await res.json();
                                 state.hasFolder = true;
                                 state.index = 1;
@@ -480,33 +531,13 @@ export default {
                         }
                     }
 
-                    function prevFolder() {
-                        if (state.index > 1) {
-                            state.index = state.index - 1;
-                            this.$forceUpdate()
-                        }
-                    }
-
-                    function nextFolder() {
-                        // console.log('ssssssssssssss', state)
-                        if (state.index < state.data.length) {
-                            state.index = state.index + 1
-                            this.$forceUpdate()
-                        }
-                    }
-
-                    function jumpFolder(item) {
-                        let val = document.querySelector('#input1')?.value;
-                        if (val > -1) {
-                            state.index = parseFloat(val)
-                            this.$forceUpdate()
-                        }
-                    }
-
                     function getImgHref(index) {
-                        console.log(state.data)
-                        return `http://192.168.2.64:3000/data/${state.item}/p${state.index}.png`
+                        return `http://${wlanip}:3000/data/${state.item}/p${index}.png`
                     }
+
+                    // function getImgHref(index) {
+                    //     return `http://${wlanip}:3000/data/${state.item}/p${state.index}.png`
+                    // }
                     function getLinks() {
                         // console.log(activeName)
                         let ret = Object.entries(items.value).find(([key, v]) => key === activeName.value);
@@ -523,16 +554,13 @@ export default {
                     return {
                         items,
                         getDoc,
-                        prevFolder,
-                        nextFolder,
-                        jumpFolder,
                         loadFolder,
                         getImgHref,
                         activeName,
                         handleClick,
+                        handleRemote,
                         curlinks,
                         state,
-                        name, doubleCount, increment
                     }
                 }
 

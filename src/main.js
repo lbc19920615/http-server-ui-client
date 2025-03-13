@@ -4,17 +4,18 @@ import './index.css';
 
 import "./utils.js";
 
+
+import ZVideo from "./compnents/ZVideo.vue";
+
+
 import Folder from './views/folder';
+import Fanvas from './views/fanvas';
 import Home from './views/home';
 
-// import * as p from "pinia";
-import Simple from 'als-simple-css/simple.mjs';
-window.Simple = Simple
 
 import solarlunar from "solarlunar";
 globalThis.solarlunar = solarlunar;
 
-import ZVideo from "./compnents/ZVideo.vue";
 
 
 import "./init";
@@ -35,6 +36,16 @@ const routes = [
     path: '/folder/',
     name: 'folder',
     component: Folder,
+  },
+  {
+    path: '/fanvas/:href',
+    name: '',
+    component: Fanvas,
+  },
+  {
+    path: '/fanvas/',
+    name: 'fanvas',
+    component: Fanvas,
   },
 ]
 
@@ -68,14 +79,17 @@ window.appendStyle = function(css = '') {
 
 const App = {}
 const app = createApp(App);
+app.component(ZVideo.name, ZVideo);
+
 app.use(router)
-app.component(ZVideo.name, ZVideo)
 
-const {createPinia} = Pinia;
-const pinia = createPinia()
 
-app.use(pinia)
-app.use(ElementPlus);
+
+import('/public/element-plus.js').then(() => {
+  app.use(ElementPlus);
+})
+
+
 app.mount("#app");
 app.config.devtools = true
 

@@ -5,12 +5,12 @@
 // @description  try to take over the world!
 // @author       You
 // @match       https://t.bilibili.com/
-// @match        https://*.bilibili.com/*
+// @match       https://*.bilibili.com/*
 // @match        http://localhost:*/
+// @match      https://finance.sina.com.cn/futures/quotes/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=undefined.localhost
 // @grant        none
 // ==/UserScript==
-
 
 
 if (!window.ZY) {
@@ -7570,8 +7570,8 @@ if (!window.ZY) {
         }
       }
       /**
-       * 
-       * @param {File} file 
+       *
+       * @param {File} file
        */
       addFile(file) {
         let data = file.toData()
@@ -7579,8 +7579,8 @@ if (!window.ZY) {
       }
 
       /**
-       * 
-       * @returns 
+       *
+       * @returns
        */
       getList() {
         let arr = [...this._data]
@@ -7712,9 +7712,9 @@ if (!window.ZY) {
       }
 
       /**
-       * 
-       * @param {*} parentPath 
-       * @returns 
+       *
+       * @param {*} parentPath
+       * @returns
        */
       function getNodeByPath(parentPath) {
         let parentPathArr = [rootKey]
@@ -7758,9 +7758,9 @@ if (!window.ZY) {
       }
 
       /**
-       * 
-       * @param {[]} arr 
-       * @returns 
+       *
+       * @param {[]} arr
+       * @returns
        */
       function fromData(arr) {
         let _tree = createTreeFromFlatArray(arr)
@@ -7829,6 +7829,16 @@ if (!window.ZY) {
         url = `https://www.douyin.com/search/${keyword}?publish_time=0&sort_type=2&source=tab_search&type=general`;
       }
       window.open(url)
+    }
+
+    ZY.Utils.getSearchBest = function (keyword = "111", { site = "bilibili" } = {}) {
+      let url = "";
+      if (site === "bilibili") {
+        url = `https://search.bilibili.com/all?vt=50825901&keyword=${keyword}&search_source=5`;
+      } else if (site === "dy") {
+        url = `https://www.douyin.com/search/${keyword}?publish_time=0&sort_type=2&source=tab_search&type=general`;
+      }
+      return url
     }
 
   })();

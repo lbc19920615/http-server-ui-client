@@ -154,8 +154,8 @@ function testWeb() {
     setTimeout(() =>{
 
     
-        let html = testtpl(true)
-        // document.querySelector('#webapp').setHTMLUnsafe(html)
+        let ret = testtpl(true)
+
 
         
 

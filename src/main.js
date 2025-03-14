@@ -1,26 +1,21 @@
+import 'view-transitions-polyfill';
+
 const {createApp} = Vue;
 
 import './index.css';
 
 import "./utils.js";
 
-
 import ZVideo from "./compnents/ZVideo.vue";
-
 
 import Folder from './views/folder';
 import Fanvas from './views/fanvas';
 import Home from './views/home';
 
-
 import solarlunar from "solarlunar";
 globalThis.solarlunar = solarlunar;
 
-
-
 import "./init";
-
-
 
 const routes = [
   {
@@ -63,7 +58,29 @@ router.beforeEach(async (to) => {
   }
     // console.log(to)
   return true;
-})
+});
+
+window.gl = {
+  /**
+   *
+   * @param path {string}
+   */
+  navigateTo: ({path} = {}) => {
+    console.log(router)
+    router.push({
+      path,
+    });
+  },
+  showToast: (title = '', {type = 'success', message = '', duration = 6000} = {}) =>{
+    ElementPlus.ElNotification({
+        title: title,
+        message,
+        type: type,
+        duration,
+    })
+  }
+}
+
 window.getCurrentPage = function() {
   let to = _currentTo;
    if (to && Array.isArray(to.matched)) {
@@ -71,27 +88,25 @@ window.getCurrentPage = function() {
    }
 }
 
-window.appendStyle = function(css = '') {
-  let s = document.createElement('style');
-   s.innerHTML =css;
-   document.body.appendChild(s)
+if (!window.appendStyle) {
+  window.appendStyle = function(css = '') {
+    let s = document.createElement('style');
+    s.innerHTML =css;
+    document.body.appendChild(s)
+  }
 }
 
 const App = {}
 const app = createApp(App);
 app.component(ZVideo.name, ZVideo);
-
 app.use(router)
-
-
 
 import('/public/element-plus.js').then(() => {
   app.use(ElementPlus);
 })
 
-
 app.mount("#app");
-app.config.devtools = true
+app.config.devtools = true;
 
 // defComAndReloadCurPage('f-sds', {template: `<div>hello</div>`})
 // 定义代码
@@ -103,4 +118,4 @@ window.defComAndReloadCurPage = function(name = "", def = {}, force = true) {
 }
 
 
-// import PCRE from '@stephen-riley/pcre2-wasm'
+

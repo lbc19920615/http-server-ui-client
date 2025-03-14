@@ -15,7 +15,7 @@ function getMeta(ctx) {
  * @param nodes {NodeList}
  * @returns {{eventLists: *[]}}
  */
-function travel(nodes) {
+export function travelChildNodes(nodes) {
 
     let nodeDesc = {
         eventLists: []
@@ -54,7 +54,24 @@ function travel(nodes) {
     });
 
     return nodeDesc
+}
 
+/**
+ *
+ * @param shadowRoot {Element}
+ * @param ctx {}
+ */
+export function bindRootEle(shadowRoot,ctx = {}) {
+    let nodeDesc = travelChildNodes(shadowRoot.childNodes)
+
+    nodeDesc.eventLists.forEach((e) => {
+        let eventName = e.eventName;
+        let methodName = e.methodName;
+        let element = e.element;
+        if (ctx[methodName]) {
+            element.addEventListener(eventName, ctx[methodName]);
+        }
+    })
 }
 
 export class BaseEle extends HTMLElement {
@@ -113,19 +130,7 @@ export class BaseEle extends HTMLElement {
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(content);
 
-        console.dir(shadowRoot.childNodes);
-        let nodeDesc = travel(shadowRoot.childNodes)
 
-        console.log(nodeDesc);
-
-        nodeDesc.eventLists.forEach((e) => {
-            let eventName = e.eventName;
-            let methodName = e.methodName;
-            let element = e.element;
-            if (self[methodName]) {
-                element.addEventListener(eventName, self[methodName]);
-            }
-        })
 
 
         return shadowRoot

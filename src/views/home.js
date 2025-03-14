@@ -20,46 +20,48 @@ export default {
             {
                 template: /*html*/`
                 
-                <div @click="handleClick(key)"
-                :class="{'current-link': key == activeName }"
-                :label="key" :name="key"  v-for="links,key in items">
-                    <a >{{key}}</a>
-                </div>
+                <div @click="goToFolder">fanvas</div>  
+                  
+                <div class="grid-sm">
+                  <div class="tab-sidebar">
+                    <div @click="handleClick(key)"
+                         :class="{'current-link': key == activeName }"
+                         :label="key" :name="key"  v-for="links,key in items">
+                      <a >{{key}}</a>
+                    </div>
 
-
-                <div class="grid" style="max-height: 300px; overflow: auto">
-                    <div v-for="item,item_key in curlinks" :class="{'current-link': item == state.item }"> 
+                    <div class="grid" style="max-height: 300px; overflow: auto">
+                      <div v-for="item,item_key in curlinks" :class="{'current-link': item == state.item }">
                         {{item}} {{item_key}}
                         <button @click="loadFolder(item)">加载</button>
-                    </div>                    
-                </div>
-        
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <template v-if="state.hasFolder">
+                      <image-slideshow interval="3000000">
+                        <template v-for="(item, index) in state.data" >
+                          <img
+                              v-if="index < 3"
+                              :src="getImgHref(index + 1)"
+                          >
 
-                <div v-if="state.hasFolder">   
-
-
-                    <image-slideshow interval="3000000">
-
-                    <template v-for="(item, index) in state.data" >
-                        <img 
-                        v-if="index < 3"
-                        :src="getImgHref(index + 1)"
-                       >
-                        
-                        <img 
-                        v-else
-                        :srcres="getImgHref(index + 1)"
-                        >       
+                          <img
+                              v-else
+                              :srcres="getImgHref(index + 1)"
+                          >
+                        </template>
+                      </image-slideshow>
                     </template>
-          
-                    
-                    </image-slideshow>
-            
+                  </div>
                 </div>
+                
+ 
                 `,
 
                 mounted() {
-                    console.log(this.items.default)
+                    // console.log(this.items.default)
                     this.handleRemote(this)
                 },
                 setup() {
@@ -516,12 +518,7 @@ export default {
 
                                 this.$forceUpdate()
                             } else {
-                                ElementPlus.ElNotification({
-                                    title: 'Warning',
-                                    message: `${item.replace('a_', '')} 没收集`,
-                                    type: 'warning',
-                                    duration: 0
-                                })
+                                gl.showToast( `${item.replace('a_', '')} 没收集`,)
                             }
                         } catch (e) {
                             state.hasFolder = false
@@ -547,10 +544,17 @@ export default {
                         return []
                     }
 
-
                     let curlinks = ref([])
 
                     curlinks.value = getLinks()
+
+                    // const router = globalThis.VueRouter.useRouter()
+                    function goToFolder() {
+                        globalThis.gl.navigateTo({
+                            path: '/fanvas'
+                        })
+                    }
+
                     return {
                         items,
                         getDoc,
@@ -558,6 +562,7 @@ export default {
                         getImgHref,
                         activeName,
                         handleClick,
+                        goToFolder,
                         handleRemote,
                         curlinks,
                         state,

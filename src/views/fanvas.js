@@ -1,31 +1,23 @@
 import ZTodo from "../compnents/ZTodo.vue";
 
-export default {
-    components: {
-        ZTodo
-    },
-    template: /*html*/`
-    <div style="display: flex;" >
-        <div id="juzcon" class="juz-con">
+let juzcom = {
+    template:`<div id="juzcon" class="juz-con">
             <div  class="juz"  v-for="(row, rowindex) in rowlen">
                 <div class="juz__item" v-for="(col, colindex) in collen">
                 {{getNum(rowindex, colindex)}}
                 </div>
             </div>
-        </div>
-        <div style="width: 100%">
-        <z-todo></z-todo>
-        </div>
-    </div>
-    `,
-
+        </div>`,
     mounted() {
-       
-let w = document.querySelector('#juzcon').clientWidth;
+
+        let w = document.querySelector('#juzcon').clientWidth;
 // console.log(w)
 
-    window.appendStyle(`
-
+        window.appendStyle(`
+.juz {
+    display: flex;
+    align-items: center;
+}
         .juz-con {
             width: max-content;
             height: max-content;
@@ -54,7 +46,6 @@ let w = document.querySelector('#juzcon').clientWidth;
     
 }
         `)
-    //   console.dir(document.querySelector('#juzcon').style.backgroundImage)
     },
     data() {
         let rowlen = 27;
@@ -89,36 +80,36 @@ let w = document.querySelector('#juzcon').clientWidth;
                 }
                 else if (rowindex > base) {
                     let v = (rowindex - base) * 2;
-                    return (v * v + v + 1) + ( rowindex - base   ) 
+                    return (v * v + v + 1) + ( rowindex - base   )
                 }
             }
             else if (rowindex < base && colindex > base) {
                 let rowg = base - rowindex;
-                let colg = colindex - base; 
+                let colg = colindex - base;
                 if (rowg > colg) {
                     let v = (rowindex - base) * 2;
-                    return (v * v + 1) - ( rowg - colg) 
+                    return (v * v + 1) - ( rowg - colg)
                 }
                 else {
                     let v = (colindex - base) * 2;
-                    return (v * v + 1) + ( colg - rowg ) 
+                    return (v * v + 1) + ( colg - rowg )
                 }
             }
             else if (rowindex > base && colindex > base) {
                 let rowg = rowindex - base ;
-                let colg = colindex - base; 
+                let colg = colindex - base;
                 if (rowg > colg) {
                     let v = (rowindex - base) * 2;
-                    return (v * v + v + 1) - ( colg - rowg   ) 
+                    return (v * v + v + 1) - ( colg - rowg   )
                 }
                 else {
                     let v = (colindex - base) * 2;
-                    return (v * v + v + 1) + ( rowg - colg  ) 
+                    return (v * v + v + 1) + ( rowg - colg  )
                 }
             }
             else if (rowindex > base && colindex < base) {
                 let rowg =  rowindex - base;
-                let colg = base-  colindex; 
+                let colg = base-  colindex;
                 if (rowg == colg) {
                     let v = (rowindex - base) * 2 + 1;
                     return v * v
@@ -135,7 +126,7 @@ let w = document.querySelector('#juzcon').clientWidth;
             }
             else if (rowindex < base && colindex < base) {
                 let rowg =  rowindex;
-                let colg = colindex; 
+                let colg = colindex;
                 if (rowg == colg) {
                     let v = (rowindex - base) * 2;
                     return (v * v + 1 - (2 * (base - colindex)))
@@ -150,5 +141,33 @@ let w = document.querySelector('#juzcon').clientWidth;
                 }
             }
         }
+    }
+}
+
+export default {
+    components: {
+        ZTodo
+    },
+    template: /*html*/`
+    <div class="grid-sm" >
+        <div>
+            result
+        </div>
+        <div>
+             <z-todo></z-todo>
+        </div>
+    </div>
+    `,
+
+    mounted() {
+        // juzcom.mounted()
+    },
+    data() {
+        return {
+            // ...juzcom.data()
+        }
+    },
+    methods: {
+        // ...juzcom.methods
     }
 }

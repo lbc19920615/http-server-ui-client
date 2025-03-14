@@ -66,7 +66,7 @@ li {
 
 <template>
     <div class="todo-container">
-        <h1>Vue Todo List</h1>
+        <h1>Todo List</h1>
         <div class="input-group">
             <input type="text" :value="newTodo" @input="onInput" placeholder="添加新任务..." @keypress.enter="addTodo">
             <button class="primary" @click="addTodo">添加</button>
@@ -89,13 +89,13 @@ li {
 </template>
 
 <script>
-import { ref, watch } from 'vue';
+
 
 export default {
     name: 'ZTodo',
     setup() {
-        // console.log(ref);
-        
+      const { ref, watch } = Vue;
+
         let newTodo = ref('');
         let todos = ref([]);
 
@@ -121,8 +121,6 @@ export default {
         };
 
         const onInput = function(e) {
-            console.log(e);
-            
             newTodo.value = e.target.value
         }
 

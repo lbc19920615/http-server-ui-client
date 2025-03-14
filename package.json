@@ -37,6 +37,7 @@
     "decimal.js": "^10.4.3",
     "define-function": "^2.0.0",
     "element-plus": "^2.3.6",
+    "es-toolkit": "^1.33.0",
     "html-dom-parser": "^5.0.13",
     "json5": "^2.2.0",
     "mathjs": "^14.0.1",
@@ -46,7 +47,6 @@
     "qs": "^6.10.2",
     "sass": "^1.49.11",
     "solarlunar": "^2.0.7",
-    "vue": "^3.3.4",
-    "vue-router": "^4.2.2"
+    "view-transitions-polyfill": "^1.0.3"
   }
 }

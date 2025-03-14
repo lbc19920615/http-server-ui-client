@@ -55,16 +55,36 @@ let parseToHtml = {
         beforeRenderTag(tagname = '', childNode = {attribs: {}}) {
             return [tagname]
         },
-        handleEachRender(curuuid = '', ruleConds = [], options = {}, handleContent) {
-            let arr =  options.methods.get(ruleConds[0]);
+        handleEachRender(curuuid = '', ruleConds = [], options = {}, handleContent, {partials, travel, createSubOption} = {}) {
+            // console.log(partials)
+            let uid = curuuid;
+            let arr = options.methods.get(ruleConds[0]);
+            let nodes = partials[0].nodes.map(v => v.cloneNode(true));
+            options.methods.domMap.set(ruleConds[0], {
+                id: uid,
+                type: "each",
+                nodes: nodes,
+                getRenderStr(arr = [], newNodes = nodes) {
+                    let str = "";
+                    arr.forEach((v, index)=>{
+                        let suboption = createSubOption(v, index);
+                        // console.log(suboption.methods.data())
+                        travel(newNodes, suboption);
+                        str = str + `\n<!--start__each_item:${uid}:${ruleConds[0]}-->`
+                        str = str + '\n' + suboption.str;
+                        str = str + `\n<!--end__each_item:${uid}:${ruleConds[0]}-->`
+                    });
+                    return str;
+                }
+            });
             if (Array.isArray(arr)) {
-
-                options.str = options.str + `\n<!--start__each:${curuuid}-->\n`
-
+                options.str = options.str + `\n<!--start__each:${uid}:${ruleConds[0]}-->\n`
                 arr.forEach((v, index)=>{
+                    options.str = options.str + `\n<!--start__each_item:${uid}:${ruleConds[0]}-->`
                     handleContent(v, index)
+                    options.str = options.str + `\n<!--end__each_item:${uid}:${ruleConds[0]}-->`
                 });
-                options.str = options.str + `\n<!--end__each:${curuuid}-->`
+                options.str = options.str + `\n<!--end__each:${uid}:${ruleConds[0]}-->`
             } else {
                 console.log('不是arr', options)
             }
@@ -77,12 +97,12 @@ let parseToHtml = {
             options.str = options.str +  result
         },
         handleIfRender(ruleConds = [], options = {}, handleContent = function() {}, {partials, functions, travel, createSuboption, elseIfs, elses} = {}) {
+            let uid = createUUID();
             let result = runExpr(ruleConds[0], {
                 ...options.methods.data(),
                 ...functions
             })
             // console.log(result);
-
             if (result) {
                 handleContent()
             }
@@ -114,10 +134,43 @@ let parseToHtml = {
     } 
 }
 
+
+class CondsMap {
+    /**
+     *
+     * @type {Map<string, *[]>}
+     */
+    data = new Map()
+    set(key, value) {
+        if (!this.data.has(key)) {
+            let newArr = []
+            newArr.push(value)
+            this.data.set(key, newArr)
+        }
+        else {
+            let oldArr = this.data.get(key)
+            oldArr.push(value)
+            this.data.set(key, oldArr)
+        }
+    }
+    get(key) {
+        return this.data.get(key);
+    }
+    update(key = '', arr = []) {
+        if (!Array.isArray(arr)) {
+            return
+        }
+        this.data.set(key, arr);
+    }
+    has(key) {
+        return this.data.has(key);
+    }
+}
+
 export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, log = function() {}, handlers = parseToHtml.handlers} = {}) {
     let tagRegexp = /\{(\#[^\s]*)\s*([^}]*)\}/g;
     let flcRegexp = /\{(\:+)\s*([^}\s]*)(.*)\}/g;
-    let varRegexp = /\{=\s*([^}]*)\}/g
+    let varRegexp = /\{=\s*([^}]*)\}/g;
 
     let endRegexp = /\{(\/+)\s*([^}\s]*)(.*)\}/g;
 
@@ -145,7 +198,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
 
     let parsed = parse(htmlString);
     let content = parsed[1]
-    
+
 
     function getPath(basepath, path) {
         if (basepath && path !== '') {
@@ -157,7 +210,13 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
         return path
     }
 
+
+    /**
+     *
+     * @type {{domMap: CondsMap, path: string, data(): {}, get(*): *}}
+     */
     let methods = {
+        domMap: new CondsMap(),
         path: '',
         data() {
             return tempdata
@@ -168,7 +227,11 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
             return deepGet(this.data(),  p)
         }
     }
-    
+
+    /**
+     *
+     * @type {{str: string, methods: {domMap: CondsMap, path: string, data(): {}, get(*): *}}}
+     */
     let options = {
         str: '',
         methods
@@ -178,7 +241,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
     /**
      * 
      * @param {HTMLAllCollection} children 
-     * @param {{str: ''}} options
+     * @param {options} options
      */
     function travel(children, options) {
     
@@ -210,8 +273,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                     let a =  t.matchAll(flcRegexp);
                     let [_, key, value, cond] = [...a][0];
                     // console.log(key, value);
-                    
-                
+
                     isInner = true
 
                     let obj = {
@@ -225,105 +287,102 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                     }
 
                     partials.push(obj)
-
                 }
                 else if (t.startsWith('{/')) {
-                        //  log(partials);
-
-                        if (rule === '#each') {
-                            curuuid = createUUID()
-                            let eachBlockValueName = '';
-                            let eachBlockIndexName = '';
-                            let ruleConds = ruleCond.split('as').map(v => v.trim());
-                            // log(ruleConds);  
-                            let eachDefCond = ruleConds[1]
-                            if (eachDefCond) {
-                                let arr = eachDefCond.split(',').map(v => v.trim())
-                                // log(arr)
-                                if (arr.length === 2) {
-                                    [eachBlockValueName, eachBlockIndexName] = arr
-                                }
-                            }        
-          
-                            if (handlers?.handleEachRender) {
-                                handlers.handleEachRender(curuuid, ruleConds,  options, function(v, index) {
-                                   let suboption = {
-                                       str: '',
-                                       methods: {
-                                           ...options.methods,
-                                           data() {
-                                                let newdata = {
-                                                    ...options.methods.data(),
-                                                }
-                                                if (eachBlockValueName) {
-                                                    newdata[eachBlockValueName] = v
-                                                }
-                
-                                                if (eachBlockIndexName) {
-                                                    newdata[eachBlockIndexName] = index
-                                                }
-                
-                                                // log(newdata);
-                
-                                                return newdata
-                                            },
-                                        }
-                                   }      
-                                   travel(partials[0].nodes, suboption);
-                                   options.str = options.str + suboption.str
-                                //    log(suboption.str);
-                                })
-                           }
-
+                    if (rule === '#each') {
+                        curuuid = createUUID()
+                        let eachBlockValueName = '';
+                        let eachBlockIndexName = '';
+                        let ruleConds = ruleCond.split('as').map(v => v.trim());
+                        // log(ruleConds);
+                        let eachDefCond = ruleConds[1]
+                        if (eachDefCond) {
+                            let arr = eachDefCond.split(',').map(v => v.trim())
+                            // log(arr)
+                            if (arr.length === 2) {
+                                [eachBlockValueName, eachBlockIndexName] = arr
+                            }
                         }
-                        else if (rule === '#if')  {
-                            let ruleConds = [ruleCond.trim()]
-                            // log(childNode);
 
-                            function createSuboption() {
+                        if (handlers?.handleEachRender) {
+                            function  createSubOption(v, index) {
                                 return {
                                     str: '',
                                     methods: {
                                         ...options.methods,
                                         data() {
-                                            return {
+                                            let newdata = {
                                                 ...options.methods.data(),
                                             }
+                                            if (eachBlockValueName) {
+                                                newdata[eachBlockValueName] = v
+                                            }
+
+                                            if (eachBlockIndexName) {
+                                                newdata[eachBlockIndexName] = index
+                                            }
+                                            return newdata
                                         },
+                                    }
+                                }
+                            }
+                            handlers.handleEachRender(curuuid, ruleConds,  options, function(v, index) {
+                                let suboption = createSubOption(v, index);
+                                travel(partials[0].nodes, suboption);
+                                options.str = options.str + suboption.str
+                            //    log(suboption.str);
+                            }, {partials, travel, createSubOption})
+                       }
+
+                    }
+                    else if (rule === '#if')  {
+                        let ruleConds = [ruleCond.trim()]
+                        // log(childNode);
+
+                        function createSuboption() {
+                            return {
+                                str: '',
+                                methods: {
+                                    ...options.methods,
+                                    data() {
+                                        return {
+                                            ...options.methods.data(),
+                                        }
                                     },
-                                };
-                            }
-
-                            let partialsElse = partials.filter(v => {
-                                return v.type
-                            });
-            
-                            let elseIfs = partialsElse.filter(v => {
-                                return v.type === 'else-if'
-                            });
-            
-                            let elses = partialsElse.filter(v => {
-                                return v.type === 'else'
-                            });
-                            // console.log(elseIfs);
-
-                            if (handlers?.handleIfRender) {
-                                handlers?.handleIfRender(ruleConds, options, function() {
-                                    let suboption = createSuboption()
-                                    travel(partials[0].nodes, suboption);
-                                    options.str = options.str + suboption.str
-                                }, {partials, functions, travel, createSuboption, elseIfs, elses})
-                            }
+                                },
+                            };
                         }
 
-                        isPartial = false
-                        isInner = false
-                        partials = [{
-                            nodes: []
-                        }]
-                        rule = ''
-                        ruleCond = ''
-                        curuuid = ''
+                        let partialsElse = partials.filter(v => {
+                            return v.type
+                        });
+
+                        let elseIfs = partialsElse.filter(v => {
+                            return v.type === 'else-if'
+                        });
+
+                        let elses = partialsElse.filter(v => {
+                            return v.type === 'else'
+                        });
+                        // console.log(elseIfs);
+
+                        if (handlers?.handleIfRender) {
+                            handlers?.handleIfRender(ruleConds, options, function() {
+                                let suboption = createSuboption()
+                                travel(partials[0].nodes, suboption);
+                                options.str = options.str + suboption.str
+                            }, {partials, functions, travel, createSuboption, elseIfs, elses})
+                        }
+                    }
+
+                    isPartial = false
+                    isInner = false
+                    partials = [{
+                        nodes: []
+                    }]
+                    rule = ''
+                    ruleCond = ''
+                    curuuid = ''
                 }
                 else {
 
@@ -397,5 +456,5 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
     if (globalThis.beautifier) {
         log(beautifier.html(options.str));
     }
-    return options.str
+    return options
 }

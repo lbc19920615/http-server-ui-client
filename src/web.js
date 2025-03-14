@@ -221,7 +221,7 @@ function testWeb() {
                                     let subNodes = [];
 
                                     let curIndex = start;
-                                    while (!curIndex?.nextSibling.isEqualNode(endC)) {
+                                    while (!curIndex?.nextSibling.isEqualNode(end)) {
                                         subNodes.push(curIndex.nextSibling);
                                         curIndex = curIndex.nextSibling;
                                     }
@@ -279,33 +279,39 @@ function testWeb() {
                 let needRenders = ctx?.findNeedRender(path);
                 needRenders.forEach(item => {
                     if (item) {
-                        // update
-                        // delete subitem0
-                        // let subitem0 = item?.getSubItem(0);
-                        // console.log(subitem0)
-                        // let insertEle =  subitem0.start?.previousSibling;
-                        // item?.clearFromNode(subitem0.start?.previousSibling, subitem0.end?.nextSibling);
+                        function deleteSubItem(value, {from = item} = {}) {
+                            let index = previousValue.findIndex(v => v === value);
+                            if (index !== -1) {
+                                let subitem0 = from?.getSubItem(index);
+                                from?.clearFromNode(subitem0.start?.previousSibling, subitem0.end?.nextSibling);
+                            }
+                        }
+
+                        function appendSubItem(value, {from = item} = {}) {
+                            let index = arr.findIndex(v => v === value);
+                            if (index !== -1) {
+                                let preItem = from?.getSubItem(index - 1);
+                                // console.log(index, preItem)
+                                if (preItem.end !== null) {
+                                    let insertEle = preItem.end;
+                                    let domes = from?.getDomFromData([value]);
+                                    insertEle.after(...domes)
+                                }
+                            }
+                        }
 
                         diffed.deleted.forEach((del_item) => {
-                            let index = previousValue.findIndex(v => v === del_item);
-                            if (index !== -1) {
-                                let subitem0 = item?.getSubItem(index);
-                                console.log(subitem0, index)
-                                item?.clearFromNode(subitem0.start?.previousSibling, subitem0.end?.nextSibling);
-                            }
+                            deleteSubItem(del_item, {from: item});
                         })
 
                         diffed.added.forEach((add_item) => {
-                            let index = arr.findIndex(v => v === add_item);
-                            if (index !== -1) {
-                                let preItem = item?.getSubItem(index - 1);
-                                // console.log(index, preItem)
-                                let insertEle = preItem.end;
-                                let doms = item?.getDomFromData([item]);
-                                insertEle.after(...doms)
-                            }
+                            appendSubItem(add_item, {from: item});
                         });
 
+                        // diffed.updated.forEach((upt_item) => {
+                        //     deleteSubItem(upt_item, {from: item});
+                        //     appendSubItem(upt_item, {from: item});
+                        // })
 
 
                     }

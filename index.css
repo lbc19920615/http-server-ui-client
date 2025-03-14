@@ -1,3 +1,7 @@
+html {
+    overflow-x: hidden;
+}
+
 .con {
     margin-top: 30px;
     padding: 10px;
@@ -37,30 +41,62 @@
 
 .grid {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     align-items: center;
+    gap: 10px;
 }
 
-.juz {
-    display: flex;
-    align-items: center;
+
+.grid-sm {
+    display: grid;
+    grid-template-columns: max-content  1fr;
+    align-items: start;
+    gap: 10px;
 }
 
 @media screen and (max-width: 720px) {
-    .grid {
-        grid-template-columns: 1fr 1fr 1fr;
+    .grid-sm {
+        grid-template-columns: 1fr;
+        gap: 0;
     }
-    
+}
+
+@media screen and (min-width: 1220px) {
+    .tab-sidebar {
+        position: sticky;
+        top: 0;
+    }
 }
 
 textarea {
-width: 600px;
-display: block;
-height: 300px;
+    width: 600px;
+    display: block;
+    height: 300px;
 }
 
 image-slideshow {
     --slide-min-height: 360px;
     --transition-duration: 0.5s;
+}
 
+z-list-item {
+    display: block;
+    border-bottom: 1px solid var(--el-color-primary);
+}
+z-list .sub {
+    margin-bottom: 10px;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+    position: absolute;
+}
+.fade-enter-to,
+.fade-leave-from {
+    opacity: 1;
+}
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.5s ease;
 }

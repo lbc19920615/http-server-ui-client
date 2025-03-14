@@ -37,7 +37,7 @@
     <textarea id="out" style="display: none;"></textarea>
 
     <template id="z-list_tpl">
-        <div bind:click="onclick">
+        <div>
             <slot name="content"></slot>
         </div>
     </template>
@@ -53,13 +53,18 @@
             <template shadowrootmode="open">
                 <slot name="content"></slot>
             </template>
-            <div slot="content">hello</div>
+<!--            <div slot="content">hello</div>-->
         </z-list>
     </div>
 
     <div id="tpl" style="display: none"></div>
     <div id="app">
-        <router-view></router-view>
+        <router-view v-slot="{ Component }">
+            <transition name="fade">
+                <component :is="Component" />
+            </transition>
+        </router-view>
+<!--        <router-view></router-view>-->
     </div>
 
     <template id="folder-tpl">

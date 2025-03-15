@@ -5,7 +5,7 @@
   "main": "",
   "scripts": {
     "dev": "vite --port 3010 --host 0.0.0.0",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test tests/frm.test.mjs",
     "start": "node server.js"
   },
   "repository": {

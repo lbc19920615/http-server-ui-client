@@ -18,7 +18,31 @@ function createUUID () {
     return crypto.randomUUID().replaceAll('-', '_')
 }
 
-function deepGet (obj, path, defaultValue, delimiter) {
+export function deepSet (obj, path, val) {
+    path = path.replaceAll("[", ".[");
+    const keys = path.split(".");
+
+    for (let i = 0; i < keys.length; i++) {
+        let currentKey = keys[i];
+        let nextKey = keys[i + 1];
+        if (currentKey.includes("[")) {
+            currentKey = parseInt(currentKey.substring(1, currentKey.length - 1));
+        }
+        if (nextKey && nextKey.includes("[")) {
+            nextKey = parseInt(nextKey.substring(1, nextKey.length - 1));
+        }
+
+        if (typeof nextKey !== "undefined") {
+            obj[currentKey] = obj[currentKey] ? obj[currentKey] : (isNaN(nextKey) ? {} : []);
+        } else {
+            obj[currentKey] = val;
+        }
+
+        obj = obj[currentKey];
+    }
+}
+
+export function deepGet (obj, path, defaultValue, delimiter) {
     if (typeof path === 'string') {
         path = path.split(delimiter || '.');
     }
@@ -96,8 +120,8 @@ let parseToHtml = {
 
             let uid = createUUID();
 
-            function  setVal(key, content){
-                options.methods.domMap.set(key, {
+            function getC(content) {
+                return {
                     id: uid,
                     type: "value",
                     cur: null,
@@ -111,16 +135,31 @@ let parseToHtml = {
                         })
                     },
                     reload() {
-                        console.log('sssss', this)
+                        // console.log('sssss', this)
                         if (this.cur) {
                             this.cur.textContent = this.getRenderStr()
                         }
                     }
-                })
+                }
             }
 
+            function  setVal(key, content){
+                let c= getC(content)
+                options.methods.domMap.set(key, c);
+            }
+
+            // console.log(content);
             if (deepGet(tempdata, content)) {
                 setVal(content, content)
+            }
+            else if (deepGet(functions, content)) {
+                let c = getC(content);
+
+                c.getRenderStr = function () {
+                    // console.log(functions[content])
+                    return functions[content]
+                }
+                options.methods.domMap.set(content, c);
             }
             else {
                 let ast = getExprAst(content);

@@ -1,4 +1,6 @@
 import {BaseEle, bindRootEle, utils} from "./web/core.js"
+import {deepSet, deepGet} from "./frm";
+
 import "./web/ext"
 
 import "./web/imageslider.js"
@@ -34,37 +36,8 @@ ZListItem.defsel('z-list-item', {
 });
 
 
-/**
- *
- * @param obj {{}}
- * @param path {string | *[]}
- * @param defaultValue {*}
- * @param delimiter
- * @returns {*}
- */
-function deepGet (obj, path, defaultValue, delimiter) {
-    if (typeof path === 'string') {
-        path = path.split(delimiter || '.');
-    }
-    if (Array.isArray(path)) {
-        let len = path.length;
-        for (let i = 0; i < len; i++) {
-            if (
-                obj &&
-                (Object.prototype.hasOwnProperty.call(obj, path[i]) || obj[path[i]])
-            ) {
-                obj = obj[path[i]];
-            } else {
-                return defaultValue;
-            }
-        }
-        return obj;
-    } else {
-        return defaultValue;
-    }
-}
 
-let renderTpl = function(tempData  = {}, {debug = false} = {}) {
+let renderTpl = function(tempData  = {}, {functions, debug = false} = {}) {
 
     let htmlString = /*html*/`
 <template>
@@ -74,7 +47,10 @@ let renderTpl = function(tempData  = {}, {debug = false} = {}) {
             <div>
             {= str} {= num} {= num + 1}
             </div>
+           <div>
+             {= runnum}
             {= deepobj.name}
+            </div>
             {#each items as item, i}
             <z-list-item>item_{= i}</z-list-item>
             <div class="sub">
@@ -103,8 +79,7 @@ let renderTpl = function(tempData  = {}, {debug = false} = {}) {
     let log = debug ? console.log.bind(this) : function() {}
 
     return parseStaticTemplate(htmlString, tempData, {
-        functions: {
-        },
+        functions,
         log
     })
 
@@ -128,16 +103,14 @@ function testWeb() {
         ],
     }
 
-    // function logHtml(newStr= '') {
-    //     if (globalThis.beautifier) {
-    //         console.log(beautifier.html(newStr));
-    //     }
-    // }
+    let functions = {
+        get runnum() {
+            // {{num}}
+            return deepGet(tempData, "num") + 1
+        }
+    }
 
-
-    setTimeout(() =>{
-
-
+    function  buildAppCtx() {
         function strToNodes(newStr = '') {
             let parser = new DOMParser();
             let doc = parser.parseFromString(`<div>${newStr}</div>`, "text/html")
@@ -146,17 +119,95 @@ function testWeb() {
             return [...doc.body.childNodes[0].childNodes]
         }
 
+        function parseValueToTextNode(nodes = []) {
+            nodes.forEach(node => {
+                // console.dir(node);
+                if (node.nodeName === 'VALUE') {
+                    let key = node.textContent;
+                    let ast = getExprAst(key);
+                    let id = node.getAttribute('id');
+
+                    let ins = ctx.findById(key, id);
+                    if (!ins) {
+
+                        let ids = [];
+                        ast.getIds(ids)
+                        if (ids.length > 0) {
+                            key = ids[0];
+                        }
+                        ins = ctx.findById(key, id);
+                    }
+                    if (ins) {
+                        // console.log(ins)
+                        let str = ins.getRenderStr();
+                        // console.log('str:', str)
+
+                        let textNode = new Text(str);
+                        textNode.id = id;
+                        node.after(textNode);
+                        node.remove();
+                        ins.cache(textNode)
+                    } else {
+                        console.log(key, id)
+                    }
+                }
+                else {
+                    if (node.childNodes.length > 0) {
+                        parseValueToTextNode([...node.childNodes]);
+                    }
+                }
+            })
+            return nodes
+        }
+
+        function getNewNodes(newStr = '') {
+            let nodes = strToNodes(newStr);
+            parseValueToTextNode(nodes);
+            return nodes;
+        }
+
         let ctx = {
             domMap: new Map(),
-            /**
-             * @type {Node[]}
-             */
-            comments: []
+            rootEle: null,
+            get comments() {
+                if (this.rootEle) {
+                    return utils.getAllComments(this.rootEle)
+                }
+                return []
+            }
         }
+
+        ctx.init = function (rootEle, data, {functions} = {}) {
+            ctx.rootEle = rootEle;
+            let ret = renderTpl(data, {functions, debug: false});
+            Object.defineProperty(ctx, "domMap", {
+                get() {
+                    return ret.methods.domMap
+                }
+            })
+            Object.defineProperty(ctx, "data", {
+                get() {
+                    return data
+                }
+            })
+            let domes = getNewNodes(ret.str);
+            rootEle.append(...domes)
+        }
+
         /**
          *
          * @param path
-         * @returns {{render: (arr: Array) => [{}]}}
+         * @param value {*}
+         */
+        ctx.setData = function (path = '', value) {
+            console.log(ctx.data)
+            deepSet(ctx.data, path, value);
+        }
+
+        /**
+         *
+         * @param path
+         * @returns {*|*[]}
          */
         ctx.findNeedRender = function (path = '') {
             console.log(ctx.domMap, path);
@@ -169,7 +220,7 @@ function testWeb() {
                     subNodes.push(cur.nextSibling);
                     cur = cur.nextSibling;
                 }
-                console.log(start, end, subNodes);
+                console.log(start, subNodes);
 
                 subNodes.forEach(node => {
                     let comments = utils.getAllComments(node);
@@ -189,20 +240,18 @@ function testWeb() {
                 })
             }
 
-
-
             if (ctx.domMap.has(path)) {
-                // console.log(ctx.comments)
                 let doms = ctx.domMap.get(path);
-                let ret = doms.map(v => {
-                    // console.log(v)
+                let domsRet = doms.map(v => {
+
                     if (v.type === "each") {
                         let eachStartId = `start__each:${v.id}`;
                         let eachEndId = `end__each:${v.id}`;
 
-                        let startC = ctx.comments.find(comment => comment.nodeValue.includes(eachStartId))
-                        let endC = ctx.comments.find(comment => comment.nodeValue.includes(eachEndId))
-
+                        let comments =  ctx.comments;
+                        let startC = comments.find(comment => comment.nodeValue.includes(eachStartId))
+                        let endC = comments.find(comment => comment.nodeValue.includes(eachEndId))
+                        console.log(comments, startC)
                         if (startC) {
                             return {
                                 /**
@@ -260,7 +309,7 @@ function testWeb() {
                                     let newStr = v.getRenderStr(arr);
                                     // console.log(newStr)
 
-                                    return strToNodes(newStr)
+                                    return getNewNodes(newStr)
                                 }
                             }
                         }
@@ -273,10 +322,11 @@ function testWeb() {
                                 let eachStartId = `start__${type}:${v.id}`;
                                 let eachEndId = `end__${type}:${v.id}`;
 
-                                let startC = ctx.comments.find(comment => comment.nodeValue.includes(eachStartId))
-                                let endC = ctx.comments.find(comment => comment.nodeValue.includes(eachEndId))
+                                let comments =  ctx.comments;
+                                let startC = comments.find(comment => comment.nodeValue.includes(eachStartId))
+                                let endC = comments.find(comment => comment.nodeValue.includes(eachEndId))
 
-                                console.log(startC, endC)
+                                // console.log(startC, endC)
 
                                 clearFromNode(startC, endC)
                                 return {
@@ -288,12 +338,12 @@ function testWeb() {
                                 let newStr = v.getRenderStr(value);
                                 // console.log(newStr)
 
-                                return strToNodes(newStr)
+                                return getNewNodes(newStr)
                             }
                         }
                     }
                 })
-                return ret.filter(v => v)
+                return domsRet.filter(v => v)
             }
             return []
         }
@@ -310,21 +360,30 @@ function testWeb() {
             return null;
         }
 
+        ctx.deleteById = function (key = '', id = '') {
+            // console.log(key, id);
+            if (ctx.domMap.has(key)) {
+                let arr = ctx.domMap.get(key);
+                let index = arr.findIndex(v => v.id === id);
+                if (index > -1) {
+                    arr.splice(index, 1);
+                }
+                ctx.domMap.update(key, arr);
+            }
+        }
+        return ctx
+    }
+
+    setTimeout(() =>{
+
+        let ctx = buildAppCtx();
+
         window.watchedObject = onChange(tempData, function (path, value, previousValue, applyData) {
             // console.log('this:', this);
             console.log('path:', path);
             console.log('value:', value);
             console.log('previousValue:', previousValue);
             // console.log('applyData:', applyData);
-            if (path === "str") {
-                let needRenders = ctx?.findNeedRender(path);
-                needRenders.forEach(needRender => {
-                    if (needRender.type === "value") {
-                        needRender.reload()
-                    }
-                })
-
-            }
 
             if (path === "testFalse") {
                 let needRenders = ctx?.findNeedRender(path);
@@ -332,21 +391,24 @@ function testWeb() {
                     // needRender.getRenderStr(value)
                     if (needRender.type === "if") {
                         let {start} = needRender.clear("if");
-                        let nodes =  needRender.getDomFromData(value);
-                        start.after(...nodes);
+                        if (start){
+                            let nodes =  needRender.getDomFromData(value);
+                            start.after(...nodes);
+                        }
                         // console.log(start)
                     }
                 })
             }
 
-            if (path.startsWith('items') && Array.isArray(value)) {
+            else if (path.startsWith('items') && Array.isArray(value)) {
                 let diffed = arrayDiffById(previousValue, value);
-                // console.log(diffed)
+                console.log(diffed)
                 /**
                  * @type {[]}
                  */
                 let arr = value;
                 let needRenders = ctx?.findNeedRender(path);
+                console.log(needRenders);
                 needRenders.forEach(item => {
                     function deleteSubItem(value, {from = item} = {}) {
                         let index = previousValue.findIndex(v => v === value);
@@ -360,7 +422,7 @@ function testWeb() {
                         let index = arr.findIndex(v => v === value);
                         if (index !== -1) {
                             let preItem = from?.getSubItem(index - 1);
-                            // console.log(index, preItem)
+                            console.log(index, preItem)
                             if (preItem.end !== null) {
                                 let insertEle = preItem.end;
                                 let domes = from?.getDomFromData([value]);
@@ -385,78 +447,45 @@ function testWeb() {
 
                 console.dir(ctx.domMap)
             }
+
+            else {
+                let needRenders = ctx?.findNeedRender(path);
+
+                Object.keys(functions).forEach(function(key) {
+                    let funcStr = Object.getOwnPropertyDescriptor(functions, key);
+                    console.log("funcStr", funcStr?.get.toString())
+                    let regexp = /\{\{([^}]*)}}/g;
+                    let mathAll = funcStr?.get.toString().matchAll(regexp)
+                    // console.log([...mathAll])
+                    let mathces = [...mathAll]
+                    if (mathces.length > 0) {
+                        let end = mathces[mathces.length - 1];
+                        let arr = end[1].split(',');
+                        if (arr.includes(path)) {
+                            let needRenders = ctx?.findNeedRender(key);
+                            needRenders.forEach(needRender => {
+                                needRender?.reload();
+                            })
+                            // console.log("我也可以")
+                        }
+                    }
+                })
+
+
+                needRenders.forEach(needRender => {
+                    if (needRender.type === "value") {
+                        needRender.reload()
+                    }
+                });
+
+            }
         });
-
-
-        function parseValueToTextNode(nodes = []) {
-            nodes.forEach(node => {
-                // console.dir(node);
-                if (node.nodeName === 'VALUE') {
-                    let key = node.textContent;
-                    let ast = getExprAst(key);
-                    let ids = [];
-                    ast.getIds(ids)
-                    if (ids.length > 0) {
-                        key = ids[0];
-                    }
-                    let id = node.getAttribute('id');
-                    // console.log(key, id)
-                    let ins = ctx.findById(key, id);
-                    if (ins) {
-                        console.log(ins)
-                        let str = ins.getRenderStr();
-                        console.log('str:', str)
-
-                        let textNode = new Text(str);
-                        textNode.id = id;
-                        node.after(textNode);
-                        node.remove();
-                        ins.cache(textNode)
-                    }
-                }
-                else {
-                    if (node.childNodes.length > 0) {
-                        parseValueToTextNode([...node.childNodes]);
-                    }
-                }
-            })
-
-            return nodes
-        }
 
         function test() {
 
-
-
             let rootEle =  document.querySelector('#webapp');
 
-            let ret = renderTpl(tempData, {debug: true});
-
-            ctx.domMap = ret.methods.domMap;
-            ctx.deleteById = function (key = '', id = '') {
-                // console.log(key, id);
-                if (ret.methods.domMap.has(key)) {
-                    let arr = ret.methods.domMap.get(key);
-                    let index = arr.findIndex(v => v.id === id);
-                    if (index > -1) {
-                        arr.splice(index, 1);
-                    }
-                    ret.methods.domMap.update(key, arr);
-                }
-            }
-            ctx.comments = utils.getAllComments(rootEle);
-
-            let domes = strToNodes(ret.str)
-
-            parseValueToTextNode(domes)
-
-            console.dir(domes);
-
-            rootEle.append(...domes)
-
-
-
-
+            ctx.init(rootEle, window.watchedObject, {functions});
 
             ;(function() {
                 /**
@@ -468,9 +497,12 @@ function testWeb() {
                 }
 
                 bindRootEle(rootEle, rootEle);
-
-                console.dir(ctx.domMap)
             })();
+
+            globalThis.testSetData = function (path, fun) {
+                let oldVal = deepGet(watchedObject, path)
+                ctx.setData(path, fun(oldVal, watchedObject));
+            }
         }
 
         test()

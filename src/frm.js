@@ -1,6 +1,4 @@
-
-
-import { runExpr} from "./jexpr.js"
+import {getExprAst, runExpr} from "./jexpr.js"
 
 import parse from 'html-dom-parser';
 
@@ -89,27 +87,67 @@ let parseToHtml = {
                 console.log('不是arr', options)
             }
         },
-        handleValueRender(content = '', options = {}, {functions} = {}) {
-            let result = runExpr(content, {
-                ...options.methods.data(),
-                ...functions
-            })
-            options.str = options.str +  result
+        handleValueRender(content = '', options = {}, {tempdata, functions} = {}) {
+            // let result = runExpr(content, {
+            //     ...options.methods.data(),
+            //     ...functions
+            // })
+            // options.str = options.str +  result
+
+            let uid = createUUID();
+
+            function  setVal(key, content){
+                options.methods.domMap.set(key, {
+                    id: uid,
+                    type: "value",
+                    cur: null,
+                    cache(cacheTextNode) {
+                        this.cur = cacheTextNode;
+                    },
+                    getRenderStr() {
+                        return runExpr(content, {
+                            ...options.methods.data(),
+                            ...functions
+                        })
+                    },
+                    reload() {
+                        console.log('sssss', this)
+                        if (this.cur) {
+                            this.cur.textContent = this.getRenderStr()
+                        }
+                    }
+                })
+            }
+
+            if (deepGet(tempdata, content)) {
+                setVal(content, content)
+            }
+            else {
+                let ast = getExprAst(content);
+                let ids = [];
+                ast.getIds(ids)
+
+                ids.forEach(id => {
+                    setVal(id, content);
+                })
+
+            }
+
+            options.str = options.str +  `<value id="${uid}">${content}</value>`
         },
         handleIfRender(ruleConds = [], options = {}, handleContent = function() {}, {partials, functions, travel, createSuboption, elseIfs, elses} = {}) {
             let uid = createUUID();
+
             let result = runExpr(ruleConds[0], {
                 ...options.methods.data(),
                 ...functions
             })
-            // console.log(result);
-            if (result) {
-                handleContent()
-            }
-            else {
-                let isMatches = false; 
+
+            function getElseCondStr() {
+                let suboption = {}
+                let isMatches = false;
                 elseIfs.some(v => {
-                    let suboption = createSuboption()
+                    suboption = createSuboption()
 
                     isMatches = Boolean(runExpr(v.cond, {
                         ...options.methods.data(),
@@ -118,18 +156,63 @@ let parseToHtml = {
 
                     if (isMatches) {
                         travel(v.nodes, suboption);
-                        options.str = options.str + suboption.str
                     }
 
                     return isMatches
                 })
-                
+
                 if (elses.length > 0 && !isMatches) {
-                    let suboption = createSuboption()
+                    suboption = createSuboption()
                     travel(elses.at(-1).nodes, suboption);
-                    options.str = options.str + suboption.str
+                }
+
+                return suboption.str
+            }
+
+            function getRenderStr(value) {
+                let result = runExpr(ruleConds[0], {
+                    ...options.methods.data(),
+                    ...functions
+                })
+                let suboption = {};
+                if (result) {
+                    suboption = createSuboption()
+                    travel(partials[0].nodes, suboption);
+                    return suboption.str;
+                }  else {
+                    let str = getElseCondStr()
+                    if (str) {
+                        return str
+                    }
+                }
+
+                return '';
+            }
+
+            options.methods.domMap.set(ruleConds[0], {
+                id: uid,
+                type: "if",
+                getRenderStr(value) {
+                   let ret = getRenderStr(value);
+                   if (ret) {
+                       return ret;
+                   }
+                   return ''
+                }
+            })
+
+            // console.log(result);
+            options.str = options.str + `\n<!--start__if:${uid}:${ruleConds[0]}-->\n`
+            if (result) {
+                handleContent()
+            }
+            else {
+                let str = getElseCondStr()
+                if (str) {
+                    options.str = options.str + str
                 }
             }
+            options.str = options.str + `\n<!--end__if:${uid}:${ruleConds[0]}-->\n`
         }
     } 
 }
@@ -388,14 +471,14 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
 
                     let c = childNode.data;
  
-                    if (childNode?.nextSibling?.name ==  "nogap") {
+                    if (childNode?.nextSibling?.name ===  "nogap") {
                         c = ''
                     }
-                    if (childNode?.previousSibling?.name ==  "nogap") {
+                    if (childNode?.previousSibling?.name ===  "nogap") {
                         c = ''
                     }
 
-                    if (childNode?.nextSibling?.name ==  "nogap" && childNode?.previousElementSibling?.localName ==  "nogap") {
+                    if (childNode?.nextSibling?.name ===  "nogap" && childNode?.previousElementSibling?.localName ===  "nogap") {
                         c = '\n'
                     }
 
@@ -420,7 +503,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                         // log(content);
                         
                         if (handlers?.handleValueRender) {
-                            handlers.handleValueRender(content, options, {functions})
+                            handlers.handleValueRender(content, options, {tempdata, functions})
                         }
                     }
                     else {
@@ -451,7 +534,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
 
     travel(content.children, options);
 
-    log(options.str)
+    // log(options.str)
 
     if (globalThis.beautifier) {
         log(beautifier.html(options.str));

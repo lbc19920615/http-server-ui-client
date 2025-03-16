@@ -77,7 +77,7 @@ let parseToHtml = {
         beforeRenderTag(tagname = '', childNode = {attribs: {}}) {
             return [tagname]
         },
-        handleEachRender(curuuid = '', ruleConds = [], options = {}, handleContent, {partials, travel, createSubOption} = {}) {
+        handleEachRender(curuuid = '', ruleConds = [], options = {}, handleContent, {partials, byCond, travel, createSubOption} = {}) {
             // console.log(partials)
             let uid = curuuid;
             let arr = options.methods.get(ruleConds[0]);
@@ -85,6 +85,7 @@ let parseToHtml = {
             options.methods.domMap.set(ruleConds[0], {
                 id: uid,
                 type: "each",
+                key: byCond ?  byCond : "",
                 nodes: nodes,
                 getRenderStr(arr = [], newNodes = nodes) {
                     let str = "";
@@ -319,8 +320,12 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
 
     log(htmlString);
 
+
+
     let parsed = parse(htmlString);
-    let content = parsed[1]
+    console.log(parsed)
+    let domarr = parsed.filter(v => v.name === "template")
+    let content = domarr[0]
 
 
     function getPath(basepath, path) {
@@ -414,7 +419,16 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                 }
                 else if (t.startsWith('{/')) {
                     if (rule === '#each') {
-                        curuuid = createUUID()
+                        curuuid = createUUID();
+                        let byCond = "";
+                        if (ruleCond.includes("by")) {
+                            let ruleCondArr = ruleCond.split('by');
+                            ruleCond = ruleCondArr[0].trim();
+                            byCond = ruleCondArr[1].trim();
+                        }
+
+                        // console.log(byCond)
+
                         let eachBlockValueName = '';
                         let eachBlockIndexName = '';
                         let ruleConds = ruleCond.split('as').map(v => v.trim());
@@ -455,7 +469,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                                 travel(partials[0].nodes, suboption);
                                 options.str = options.str + suboption.str
                             //    log(suboption.str);
-                            }, {partials, travel, createSubOption})
+                            }, {partials, byCond, travel, createSubOption})
                        }
 
                     }

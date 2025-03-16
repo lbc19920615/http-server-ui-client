@@ -39,40 +39,38 @@ function testWeb() {
 
 
     let htmlString = /*html*/`
-<template>
-    <h1>Shopping list</h1>
-    <z-list bind:click="handleClick">
-        <div slot="content">
-            <div>
-            {= str} {= num} {= num + 1}
-            </div>
-           <div>
-             {= runnum}
-            {= deepobj.name}
-            </div>
-            {#each items as item, i}
-            <z-list-item>item_{= i}</z-list-item>
-            <div class="sub">
-                {#each item.items as sub_item, y}
-                    <div>sub_item1 {= i} {= y}</div>
-                {/each}
-
-                {#if testFalse}  <div>truedom</div>   {/if}
-
-                {#if testFalse}
-                    <div>if_dom</div>
-                {:else-if testFalse}
-                    <div>else_if_dom1</div>
-                {:else-if item}
-                    <div>else_if_dom2</div>
-                {:else}
-                    <div>else_dom</div>    
-                {/if} 
-            </div>
-            {/each}    
+<h1>Shopping list</h1>
+<z-list bind:click="handleClick">
+    <div slot="content">
+        <div>
+        {= str} {= num} {= num + 1}
         </div>
-    </z-list>
-</template>
+        <div>
+        {= computednum}
+        {= deepobj.name}
+        </div>
+        {#each items as item, item_index by id}
+        <z-list-item>item_{= item_index}</z-list-item>
+        <div class="sub">
+            {#each item.items as sub_item, sub_item_index}
+                <div>{= item_index} sub_item {= sub_item_index}</div>
+            {/each}
+
+            {#if testFalse}  <div>truedom</div>   {/if}
+
+            {#if testFalse}
+                <div>if_dom</div>
+            {:else-if testFalse}
+                <div>else_if_dom1</div>
+            {:else-if item}
+                <div>else_if_dom2</div>
+            {:else}
+                <div>else_dom</div>    
+            {/if} 
+        </div>
+        {/each}    
+    </div>
+</z-list>
     `;
 
 
@@ -93,7 +91,7 @@ function testWeb() {
 
 
     let computed = {
-        runnum: function(newData) {
+        computednum: function(newData) {
             return newData?.num + 1
         }
     }
@@ -189,18 +187,17 @@ function testWeb() {
 
         }
 
-        let renderTpl = function(htmlString, tempData  = {}, {functions, debug = false} = {}) {
+        let renderTpl = function(html = '', tempData  = {}, {functions, debug = false} = {}) {
             let log = debug ? console.log.bind(this) : function() {}
 
-            return parseStaticTemplate(htmlString, tempData, {
+            return parseStaticTemplate(html, tempData, {
                 functions,
                 log
             })
         }
 
         let watchedObject;
-        let functions = {
-        }
+        let functions = {};
 
         Object.keys(computed).forEach(key => {
             let funReg = /function(\s*)\(([^)]+)\)/g;
@@ -210,7 +207,7 @@ function testWeb() {
             let mathchAll = funStr.matchAll(funReg);
             let funargs = [...mathchAll];
             let argName= funargs[0][2];
-            console.log(argName)
+            // console.log(argName)
 
             let reg = new RegExp(argName + "\\s*[?]*\\.([\\d\\w_]+)", "g")
 
@@ -280,7 +277,8 @@ function testWeb() {
             // ctx.methods = methods;
 
             ctx.rootEle = rootEle;
-            let ret = renderTpl(template, watchedObject, {functions, debug: false});
+            // console.log(template)
+            let ret = renderTpl('<template>'+template+'</template>', watchedObject, {functions, debug: false});
             Object.defineProperty(ctx, "domMap", {
                 get() {
                     return ret.methods.domMap
@@ -367,6 +365,7 @@ function testWeb() {
                         if (startC) {
                             return {
                                 type: "each",
+                                key: v.key,
                                 /**
                                  *
                                  * @param index
@@ -531,11 +530,15 @@ function testWeb() {
             }
             console.log(needRender)
             if (needRender.type === "each") {
+                let arrKey = needRender?.key ? needRender?.key : "id";
+                // if (needRender.key){
+                //     console.log("has key", needRender)
+                // }
                 /**
                  * @type {[]}
                  */
                 let arr = value;
-                let diffed = arrayDiffById(previousValue, arr);
+                let diffed = arrayDiffById(previousValue, arr, arrKey);
                 console.log(diffed)
 
                 function deleteSubItem(value, {from = needRender} = {}) {

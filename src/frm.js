@@ -99,6 +99,7 @@ let parseToHtml = {
                     return str;
                 }
             });
+            options.methods.keysSet.add(ruleConds[0]);
             if (Array.isArray(arr)) {
                 options.str = options.str + `\n<!--start__each:${uid}:${ruleConds[0]}-->\n`
                 arr.forEach((v, index)=>{
@@ -108,7 +109,7 @@ let parseToHtml = {
                 });
                 options.str = options.str + `\n<!--end__each:${uid}:${ruleConds[0]}-->`
             } else {
-                console.log('不是arr', options)
+                console.log('不是arr', arr, options)
             }
         },
         handleValueRender(content = '', options = {}, {tempdata, functions} = {}) {
@@ -128,16 +129,16 @@ let parseToHtml = {
                     cache(cacheTextNode) {
                         this.cur = cacheTextNode;
                     },
-                    getRenderStr() {
+                    getRenderStr(newData) {
                         return runExpr(content, {
                             ...options.methods.data(),
                             ...functions
                         })
                     },
-                    reload() {
+                    reload(newData) {
                         // console.log('sssss', this)
                         if (this.cur) {
-                            this.cur.textContent = this.getRenderStr()
+                            this.cur.textContent = this.getRenderStr(newData)
                         }
                     }
                 }
@@ -155,9 +156,9 @@ let parseToHtml = {
             else if (deepGet(functions, content)) {
                 let c = getC(content);
 
-                c.getRenderStr = function () {
+                c.getRenderStr = function (newData) {
                     // console.log(functions[content])
-                    return functions[content]
+                    return functions[content]?.value()
                 }
                 options.methods.domMap.set(content, c);
             }
@@ -339,6 +340,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
      */
     let methods = {
         domMap: new CondsMap(),
+        keysSet: new Set(),
         path: '',
         data() {
             return tempdata
@@ -352,7 +354,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
 
     /**
      *
-     * @type {{str: string, methods: {domMap: CondsMap, path: string, data(): {}, get(*): *}}}
+     * @type {{str: string, methods: {domMap: CondsMap, keysSet: Set, path: string, data(): {}, get(*): *}}}
      */
     let options = {
         str: '',

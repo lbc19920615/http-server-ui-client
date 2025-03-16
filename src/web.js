@@ -1,13 +1,10 @@
-import {BaseEle, bindRootEle, utils} from "./web/core.js"
-import {deepSet, deepGet} from "./frm";
-
-import "./web/ext"
-
 import "./web/imageslider.js"
-import {parseStaticTemplate} from "./frm"
+
 import onChange from 'on-change';
-import {arrayDiffById} from "@/web/ext";
-import {getExprAst} from "@/jexpr";
+import {BaseEle, bindRootEle, utils} from "./web/core.js"
+import {deepSet, deepGet, parseStaticTemplate} from "./frm";
+import {arrayDiffById} from "./web/ext";
+import {getExprAst} from "./jexpr";
 
 class ZList extends BaseEle {
     constructor() {
@@ -37,7 +34,9 @@ ZListItem.defsel('z-list-item', {
 
 
 
-let renderTpl = function(tempData  = {}, {functions, debug = false} = {}) {
+
+function testWeb() {
+
 
     let htmlString = /*html*/`
 <template>
@@ -76,17 +75,6 @@ let renderTpl = function(tempData  = {}, {functions, debug = false} = {}) {
 </template>
     `;
 
-    let log = debug ? console.log.bind(this) : function() {}
-
-    return parseStaticTemplate(htmlString, tempData, {
-        functions,
-        log
-    })
-
-}
-
-
-function testWeb() {
 
     let tempData = {
         str: "teststr",
@@ -103,14 +91,36 @@ function testWeb() {
         ],
     }
 
-    let functions = {
-        get runnum() {
-            // {{num}}
-            return deepGet(tempData, "num") + 1
+
+    let computed = {
+        runnum: function(newData) {
+            return newData?.num + 1
         }
     }
 
-    function  buildAppCtx() {
+
+
+    function checkIsArrayPath(path = '', arrayKeys = []) {
+        if (arrayKeys.includes(path)) {
+            return true;
+        }
+        else {
+            return arrayKeys.some(key => {
+                let reg = new RegExp(key + "\\.([\\d]+)", "g");
+                return reg.test(path);
+            })
+        }
+    }
+
+    /**
+     *
+     * @param template
+     * @param data
+     * @param functions
+     * @param methods
+     * @returns {{init: function, setData: function}}
+     */
+    function  buildAppCtx({template = '', data = function () { return {} }, computed = {}, methods = {} } = {}) {
         function strToNodes(newStr = '') {
             let parser = new DOMParser();
             let doc = parser.parseFromString(`<div>${newStr}</div>`, "text/html")
@@ -174,15 +184,111 @@ function testWeb() {
                     return utils.getAllComments(this.rootEle)
                 }
                 return []
-            }
+            },
+            init: function () {},
+
         }
 
-        ctx.init = function (rootEle, data, {functions} = {}) {
+        let renderTpl = function(htmlString, tempData  = {}, {functions, debug = false} = {}) {
+            let log = debug ? console.log.bind(this) : function() {}
+
+            return parseStaticTemplate(htmlString, tempData, {
+                functions,
+                log
+            })
+        }
+
+        let watchedObject;
+        let functions = {
+        }
+
+        Object.keys(computed).forEach(key => {
+            let funReg = /function(\s*)\(([^)]+)\)/g;
+            let fun = computed[key];
+            let funStr = fun.toString();
+
+            let mathchAll = funStr.matchAll(funReg);
+            let funargs = [...mathchAll];
+            let argName= funargs[0][2];
+            console.log(argName)
+
+            let reg = new RegExp(argName + "\\s*[?]*\\.([\\d\\w_]+)", "g")
+
+            let watchMatch = funStr.matchAll(reg);
+            let watchesALl = [...watchMatch];
+
+
+            let watches = []
+            watches = watchesALl.map(v => {
+                return v[1]
+            })
+            // console.log(watchesALl, watches);
+
+            Object.defineProperty(functions, key, {
+                get() {
+                    return {
+                        watches,
+                        value() {
+                            return  computed[key](watchedObject)
+                        }
+                    }
+                },
+                enumerable: true,
+                configurable: true,
+            })
+        });
+
+
+        /**
+         *
+         * @param rootEle
+         */
+        ctx.init = function (rootEle) {
+            let coreData = data();
+            watchedObject = onChange(coreData, function (path, value, previousValue, applyData) {
+                // console.log('this:', this);
+                console.log('path:', path);
+                console.log('value:', value);
+                console.log('previousValue:', previousValue);
+                // console.log('applyData:', applyData);
+
+                let arrayKeys = [...ctx.keysSet]
+
+                if (checkIsArrayPath(path, arrayKeys) && Array.isArray(value)) {
+                    ctx.findNeedRender(path).forEach(needRender => {
+                        ctx.renderNeedRender(needRender, {value, previousValue})
+                    })
+                    // console.dir(ctx.domMap)
+                }
+
+                else {
+                    let needRenders = ctx.findNeedRender(path);
+
+                    let computedKeys = ctx.getComputedKeys(functions, path);
+                    computedKeys.forEach(function(key) {
+                        ctx.findNeedRender(key).forEach(needRender => {
+                            needRender?.reload(watchedObject);
+                        })
+                    });
+
+                    needRenders.forEach(needRender => {
+                        ctx.renderNeedRender(needRender, {value, previousValue})
+                    });
+                }
+            });
+
+            // ctx.methods = methods;
+
             ctx.rootEle = rootEle;
-            let ret = renderTpl(data, {functions, debug: false});
+            let ret = renderTpl(template, watchedObject, {functions, debug: false});
             Object.defineProperty(ctx, "domMap", {
                 get() {
                     return ret.methods.domMap
+                }
+            });
+            Object.defineProperty(ctx, "keysSet", {
+                get() {
+                    return ret.methods.keysSet
                 }
             })
             Object.defineProperty(ctx, "data", {
@@ -190,8 +296,15 @@ function testWeb() {
                     return data
                 }
             })
+
+            // console.log(ctx.keysSet)
+
             let domes = getNewNodes(ret.str);
-            rootEle.append(...domes)
+            rootEle.append(...domes);
+
+            bindRootEle(rootEle, methods);
+
+            window.watchedObject = watchedObject;
         }
 
         /**
@@ -200,7 +313,6 @@ function testWeb() {
          * @param value {*}
          */
         ctx.setData = function (path = '', value) {
-            console.log(ctx.data)
             deepSet(ctx.data, path, value);
         }
 
@@ -210,7 +322,7 @@ function testWeb() {
          * @returns {*|*[]}
          */
         ctx.findNeedRender = function (path = '') {
-            console.log(ctx.domMap, path);
+            // console.log(ctx.domMap, path);
             function clearFromNode(start, end){
                 let subNodes = [];
 
@@ -251,9 +363,10 @@ function testWeb() {
                         let comments =  ctx.comments;
                         let startC = comments.find(comment => comment.nodeValue.includes(eachStartId))
                         let endC = comments.find(comment => comment.nodeValue.includes(eachEndId))
-                        console.log(comments, startC)
+                        // console.log(comments, startC)
                         if (startC) {
                             return {
+                                type: "each",
                                 /**
                                  *
                                  * @param index
@@ -308,7 +421,6 @@ function testWeb() {
                                 getDomFromData (arr= []) {
                                     let newStr = v.getRenderStr(arr);
                                     // console.log(newStr)
-
                                     return getNewNodes(newStr)
                                 }
                             }
@@ -337,7 +449,6 @@ function testWeb() {
                             getDomFromData(value) {
                                 let newStr = v.getRenderStr(value);
                                 // console.log(newStr)
-
                                 return getNewNodes(newStr)
                             }
                         }
@@ -371,113 +482,109 @@ function testWeb() {
                 ctx.domMap.update(key, arr);
             }
         }
-        return ctx
-    }
 
-    setTimeout(() =>{
+        ctx.getComputedKeys = function (computedFuns = {}, path = '') {
+            let computedKeys = [];
+            Object.keys(computedFuns).forEach(function(key) {
+                console.log(functions[key])
+                if (functions[key]?.watches) {
+                    computedKeys = computedKeys.concat(functions[key].watches);
+                }
 
-        let ctx = buildAppCtx();
-
-        window.watchedObject = onChange(tempData, function (path, value, previousValue, applyData) {
-            // console.log('this:', this);
-            console.log('path:', path);
-            console.log('value:', value);
-            console.log('previousValue:', previousValue);
-            // console.log('applyData:', applyData);
-
-            if (path === "testFalse") {
-                let needRenders = ctx?.findNeedRender(path);
-                needRenders.forEach(needRender => {
-                    // needRender.getRenderStr(value)
-                    if (needRender.type === "if") {
-                        let {start} = needRender.clear("if");
-                        if (start){
-                            let nodes =  needRender.getDomFromData(value);
-                            start.after(...nodes);
-                        }
-                        // console.log(start)
-                    }
-                })
-            }
-
-            else if (path.startsWith('items') && Array.isArray(value)) {
-                let diffed = arrayDiffById(previousValue, value);
-                console.log(diffed)
-                /**
-                 * @type {[]}
-                 */
-                let arr = value;
-                let needRenders = ctx?.findNeedRender(path);
-                console.log(needRenders);
-                needRenders.forEach(item => {
-                    function deleteSubItem(value, {from = item} = {}) {
-                        let index = previousValue.findIndex(v => v === value);
-                        if (index !== -1) {
-                            let subitem0 = from?.getSubItem(index);
-                            from?.clearFromNode(subitem0.start?.previousSibling, subitem0.end?.nextSibling);
-                        }
-                    }
-
-                    function appendSubItem(value, {from = item} = {}) {
-                        let index = arr.findIndex(v => v === value);
-                        if (index !== -1) {
-                            let preItem = from?.getSubItem(index - 1);
-                            console.log(index, preItem)
-                            if (preItem.end !== null) {
-                                let insertEle = preItem.end;
-                                let domes = from?.getDomFromData([value]);
-                                insertEle.after(...domes)
-                            }
-                        }
-                    }
-
-                    diffed.deleted.forEach((del_item) => {
-                        deleteSubItem(del_item, {from: item});
-                    })
-
-                    diffed.added.forEach((add_item) => {
-                        appendSubItem(add_item, {from: item});
-                    });
-
-                    // diffed.updated.forEach((upt_item) => {
-                    //     deleteSubItem(upt_item, {from: item});
-                    //     appendSubItem(upt_item, {from: item});
-                    // })
-                })
-
-                console.dir(ctx.domMap)
-            }
-
-            else {
-                let needRenders = ctx?.findNeedRender(path);
-
-                Object.keys(functions).forEach(function(key) {
+                else {
                     let funcStr = Object.getOwnPropertyDescriptor(functions, key);
-                    console.log("funcStr", funcStr?.get.toString())
+                    // console.log("funcStr", funcStr?.get.toString())
                     let regexp = /\{\{([^}]*)}}/g;
                     let mathAll = funcStr?.get.toString().matchAll(regexp)
                     // console.log([...mathAll])
                     let mathces = [...mathAll]
                     if (mathces.length > 0) {
-                        let end = mathces[mathces.length - 1];
+                        let end = mathces.at(-1);
                         let arr = end[1].split(',');
                         if (arr.includes(path)) {
-                            let needRenders = ctx?.findNeedRender(key);
-                            needRenders.forEach(needRender => {
-                                needRender?.reload();
-                            })
-                            // console.log("我也可以")
+                            computedKeys.push(key);
                         }
                     }
+                }
+            });
+            return computedKeys
+        }
+
+
+        /**
+         *
+         * @param needRender {{type: string,getDomFromData?: function}}
+         * @param value
+         * @param previousValue
+         */
+        ctx.renderNeedRender = function (needRender, {value, previousValue} = {}) {
+            if (needRender.type === "if") {
+                let {start} = needRender?.clear("if");
+                if (start){
+                    let nodes = needRender.getDomFromData(value);
+                    start.after(...nodes);
+                }
+                // console.log(start)
+            }
+            if (needRender.type === "value") {
+                needRender?.reload()
+            }
+            console.log(needRender)
+            if (needRender.type === "each") {
+                /**
+                 * @type {[]}
+                 */
+                let arr = value;
+                let diffed = arrayDiffById(previousValue, arr);
+                console.log(diffed)
+
+                function deleteSubItem(value, {from = needRender} = {}) {
+                    let index = previousValue.findIndex(v => v === value);
+                    if (index !== -1) {
+                        let subitem0 = from?.getSubItem(index);
+                        from?.clearFromNode(subitem0.start?.previousSibling, subitem0.end?.nextSibling);
+                    }
+                }
+
+                function appendSubItem(value, {from = needRender} = {}) {
+                    let index = arr.findIndex(v => v === value);
+                    if (index !== -1) {
+                        let preItem = from?.getSubItem(index - 1);
+                        console.log(index, preItem)
+                        if (preItem.end !== null) {
+                            let insertEle = preItem.end;
+                            let domes = from?.getDomFromData([value]);
+                            insertEle.after(...domes)
+                        }
+                    }
+                }
+
+                diffed.deleted.forEach((del_item) => {
+                    deleteSubItem(del_item, {from: needRender});
                 })
 
-
-                needRenders.forEach(needRender => {
-                    if (needRender.type === "value") {
-                        needRender.reload()
-                    }
+                diffed.added.forEach((add_item) => {
+                    appendSubItem(add_item, {from: needRender});
                 });
+            }
+        }
+        return ctx
+    }
 
+    setTimeout(() =>{
+
+
+
+        let ctx = buildAppCtx({
+            template: htmlString,
+            data() {
+                return tempData
+            },
+            computed,
+            methods: {
+                handleClick(e) {
+                    console.log(e)
+                }
             }
         });
 
@@ -485,23 +592,32 @@ function testWeb() {
 
             let rootEle =  document.querySelector('#webapp');
 
-            ctx.init(rootEle, window.watchedObject, {functions});
-
-            ;(function() {
-                /**
-                 *
-                 * @param e {Event}
-                 */
-                rootEle.handleClick = function (e) {
-                    console.log(e)
-                }
-
-                bindRootEle(rootEle, rootEle);
-            })();
+            ctx.init(rootEle);
 
             globalThis.testSetData = function (path, fun) {
                 let oldVal = deepGet(watchedObject, path)
                 ctx.setData(path, fun(oldVal, watchedObject));
+            }
+
+            globalThis.testTasks = function* () {
+                yield function () {
+                    watchedObject.str = "hello";
+                }
+                yield function () {
+                    testSetData('items', v => {
+                        v.push({id: Date.now(), items: [1]});
+                        return v
+                    })
+                }
+                yield function () {
+                    watchedObject.testFalse = true
+                }
+                yield function () {
+                    watchedObject.testFalse = false
+                }
+                yield function () {
+                    watchedObject.num = 3;
+                }
             }
         }
 

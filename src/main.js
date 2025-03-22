@@ -15,6 +15,14 @@ import Home from './views/home';
 import solarlunar from "solarlunar";
 globalThis.solarlunar = solarlunar;
 
+if (window.innerWidth < 600) {
+  await import("./web/base.js")
+}
+
+if (!("anchorName" in document.documentElement.style)) {
+  import("https://unpkg.com/@oddbird/css-anchor-positioning");
+}
+
 import "./init";
 
 const routes = [

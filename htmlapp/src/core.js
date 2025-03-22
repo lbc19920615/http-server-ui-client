@@ -1,5 +1,3 @@
-
-
 let elementMeta = {}
 
 function getMeta(ctx) {
@@ -10,16 +8,29 @@ function getMeta(ctx) {
     return  elementMeta[name]
 }
 
+
+export const css = (strings, ...values) => String.raw({ raw: strings }, ...values);
+
+export function travelChildren(children = [], opt = {}) {
+    [...children].forEach(child => {
+        if (opt && opt.handle) {
+            opt.handle(child);
+        }
+        if (child.children && child.children.length) {
+            travelChildren(child.children, opt);
+        }
+    })
+}
+
+
 /**
  *
- * @param nodes {NodeList}
+ * @param nodes
+ * @param nodeDesc
  * @returns {{eventLists: *[]}}
  */
-export function travelChildNodes(nodes) {
+export function travelChildNodes(nodes, nodeDesc = {eventLists: []}) {
 
-    let nodeDesc = {
-        eventLists: []
-    };
 
     [...nodes].forEach((node) => {
         // console.dir(node)
@@ -29,6 +40,7 @@ export function travelChildNodes(nodes) {
         else {
             if (node instanceof HTMLElement) {
 
+                let isPushed = false;
                 Object.keys(node.attributes).forEach(key => {
                     /**
                      * @type {Attr}
@@ -46,9 +58,19 @@ export function travelChildNodes(nodes) {
                         })
                     }
 
+                    if (!isPushed && attr.name.startsWith(":")) {
+                        isPushed = true;
+                        nodeDesc.bindcLists.push({
+                            element: node
+                        })
+                    }
 
-                    console.log(attr.name, value)
-                })
+
+                    // console.log(attr.name, value)
+                });
+                if (node.childNodes) {
+                    travelChildNodes(node.childNodes, nodeDesc);
+                }
             }
         }
     });
@@ -59,19 +81,51 @@ export function travelChildNodes(nodes) {
 /**
  *
  * @param shadowRoot {Element}
- * @param ctx {}
+ * @param methods {{}}
+ * @param ctx {{}}
  */
-export function bindRootEle(shadowRoot,ctx = {}) {
-    let nodeDesc = travelChildNodes(shadowRoot.childNodes)
+export function bindRootEle(shadowRoot,methods = {}, ctx) {
+
+    let nodeDesc = {
+        eventLists: [],
+        bindcLists: []
+    };
+
+
+    travelChildNodes(shadowRoot.childNodes, nodeDesc);
+    // console.log(nodeDesc)
+
+    // console.log( nodeDesc.bindcLists)
+
+    nodeDesc.bindcLists.forEach((e) => {
+        let element = e.element;
+        if (ctx._onBindRootEle) {
+            ctx._onBindRootEle(element);
+        }
+    })
 
     nodeDesc.eventLists.forEach((e) => {
         let eventName = e.eventName;
         let methodName = e.methodName;
         let element = e.element;
-        if (ctx[methodName]) {
-            element.addEventListener(eventName, ctx[methodName]);
+        if (methods[methodName]) {
+            if (!element.isAddListener) {
+                console.log("isAddListener", element)
+                element.addEventListener(eventName, function (e) {
+                    let target = e.currentTarget || e.target;
+                    methods[methodName].bind({
+                        ...ctx?.exportCtx(),
+                        get $target() {
+                            return target
+                        },
+                    })(e)
+                });
+                element.isAddListener = true;
+
+            }
         }
-    })
+    });
+
 }
 
 export class BaseEle extends HTMLElement {
@@ -80,6 +134,7 @@ export class BaseEle extends HTMLElement {
         let self = this;
         const supportsDeclarative = HTMLElement.prototype.hasOwnProperty("attachInternals");
         const internals = supportsDeclarative ? this.attachInternals() : undefined;
+
 
         /**
          *
@@ -98,7 +153,7 @@ export class BaseEle extends HTMLElement {
 
         /**
          *
-         * @type {ElementInternals & {addState(string=): void, deleteState(string=): void}}
+         * @type {ElementInternals & extendState}
          * @private
          */
         this._internals = Object.assign(internals,extendState);
@@ -110,6 +165,7 @@ export class BaseEle extends HTMLElement {
             }
         }
 
+        this.stylesheet = new CSSStyleSheet();
     }
 
     /**
@@ -118,6 +174,11 @@ export class BaseEle extends HTMLElement {
      */
     onclick(e) {
         console.log(e)
+    }
+
+    setCSS(css = '') {
+        this.stylesheet.replaceSync(css);
+        this.shadowRoot.adoptedStyleSheets = [this.stylesheet]
     }
 
     setTemplate(sel = '') {
@@ -129,9 +190,6 @@ export class BaseEle extends HTMLElement {
 
         const shadowRoot = this.attachShadow({ mode: "open" });
         shadowRoot.appendChild(content);
-
-
-
 
         return shadowRoot
     }
@@ -152,12 +210,19 @@ export class BaseEle extends HTMLElement {
 
     _slotchange(e) {
         console.log('_slotchange', e, this.host);
-        let slots = [...this.querySelectorAll('slot')]
+        let slots = [...this.querySelectorAll('slot')];
+        let slotnodes =  slots.map(v => {
+            return v.assignedNodes()
+        })
         let hasSloted = slots.some(v => {
             return v.assignedNodes()?.length > 0
         });
-        console.log(hasSloted);
-        this.host.classList.toggle('_has-sloted', hasSloted)
+        // console.log(hasSloted);
+        this.host.classList.toggle('_has-sloted', hasSloted);
+
+        if (this.host.onSlotChange) {
+            this.host.onSlotChange(e, {slotnodes: slotnodes})
+        }
     }
 
     connectedCallback() {
@@ -172,7 +237,7 @@ export class BaseEle extends HTMLElement {
         console.log("Custom element removed from page.", this);
         this.shadowRoot.removeEventListener("slotchange",  this._slotchange);
         if (this.unmounted) {
-            this.unmount()
+            this.unmounted()
         }
     }
 

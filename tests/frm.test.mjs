@@ -1,4 +1,4 @@
-import {deepSet} from "../src/frm.js";
+import {deepSet} from "@/web/frm.js";
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';

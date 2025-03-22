@@ -2,7 +2,7 @@ import beautify from 'js-beautify';
 globalThis.beautifier = beautify
 
 
-import { parseStaticTemplate } from '../src/frm.js';
+import { parseStaticTemplate } from '../src/web/frm.js';
 
 
 let testtpl = function(debug = false) {
@@ -67,7 +67,7 @@ let testtpl = function(debug = false) {
 
     let parseToVue = {
         handlers: {
-            beforeRenderTag(tagname = '', childNode = {attribs: {}}) {
+            beforeRenderTag(tagname = '') {
                 if (tagname === 'div') {
                     return ['view']
                 }

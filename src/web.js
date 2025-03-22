@@ -1,10 +1,17 @@
-import "./web/imageslider.js"
+import '../htmlapp/src/webcom.js'
 
-import onChange from 'on-change';
-import {BaseEle, bindRootEle, utils} from "./web/core.js"
-import {deepSet, deepGet, parseStaticTemplate} from "./frm";
-import {arrayDiffById} from "./web/ext";
-import {getExprAst} from "./jexpr";
+
+
+import {BaseEle} from "../htmlapp/src/core.js"
+import {deepGet} from "./web/frm";
+import {buildAppCtx} from "./web/zcp";
+import {setArrWhen} from "./web/ext";
+
+function getLocalDatetime(timestamp) {
+    const dayjsLocal = globalThis.dayjs(timestamp);
+    // const dayjsIst = dayjsLocal.tz('Asia/Shanghai');
+    return dayjsLocal.format('YYYY-MM-DDTHH:mm:ss') ;
+}
 
 class ZList extends BaseEle {
     constructor() {
@@ -12,6 +19,7 @@ class ZList extends BaseEle {
         this.setTemplate("#z-list_tpl")
     }
 }
+
 ZList.defsel('z-list', {
     attrs: {
         color: '',
@@ -32,566 +40,227 @@ ZListItem.defsel('z-list-item', {
     }
 });
 
-
-
-
-function testWeb() {
-
-
-    let htmlString = /*html*/`
-<h1>Shopping list</h1>
-<z-list bind:click="handleClick">
-    <div slot="content">
-        <div>
-        {= str} {= num} {= num + 1}
-        </div>
-        <div>
-        {= computednum}
-        {= deepobj.name}
-        </div>
-        {#each items as item, item_index by id}
-        <z-list-item>item_{= item_index}</z-list-item>
-        <div class="sub">
-            {#each item.items as sub_item, sub_item_index}
-                <div>{= item_index} sub_item {= sub_item_index}</div>
-            {/each}
-
-            {#if testFalse}  <div>truedom</div>   {/if}
-
-            {#if testFalse}
-                <div>if_dom</div>
-            {:else-if testFalse}
-                <div>else_if_dom1</div>
-            {:else-if item}
-                <div>else_if_dom2</div>
-            {:else}
-                <div>else_dom</div>    
-            {/if} 
-        </div>
-        {/each}    
-    </div>
-</z-list>
-    `;
-
-
-    let tempData = {
-        str: "teststr",
-        num: 1,
-        testFalse: false,
-        deepobj: {
-            name: 'deepobj_name'
-        },
-        items: [
-            {
-                id: Date.now(),
-                items: [1,2,3]
-            },
-        ],
-    }
-
-
-    let computed = {
-        computednum: function(newData) {
-            return newData?.num + 1
-        }
-    }
-
-
-
-    function checkIsArrayPath(path = '', arrayKeys = []) {
-        if (arrayKeys.includes(path)) {
-            return true;
-        }
-        else {
-            return arrayKeys.some(key => {
-                let reg = new RegExp(key + "\\.([\\d]+)", "g");
-                return reg.test(path);
-            })
-        }
+class ZValue extends BaseEle {
+    constructor() {
+        super()
+        this.setTemplate("#z-value_tpl")
     }
 
     /**
      *
-     * @param template
-     * @param data
-     * @param functions
-     * @param methods
-     * @returns {{init: function, setData: function}}
+     * @param item{Node}
+     * @private
      */
-    function  buildAppCtx({template = '', data = function () { return {} }, computed = {}, methods = {} } = {}) {
-        function strToNodes(newStr = '') {
-            let parser = new DOMParser();
-            let doc = parser.parseFromString(`<div>${newStr}</div>`, "text/html")
-            // console.dir([...doc.body.childNodes[0].childNodes]);
-            parser = null;
-            return [...doc.body.childNodes[0].childNodes]
-        }
-
-        function parseValueToTextNode(nodes = []) {
-            nodes.forEach(node => {
-                // console.dir(node);
-                if (node.nodeName === 'VALUE') {
-                    let key = node.textContent;
-                    let ast = getExprAst(key);
-                    let id = node.getAttribute('id');
-
-                    let ins = ctx.findById(key, id);
-                    if (!ins) {
-
-                        let ids = [];
-                        ast.getIds(ids)
-                        if (ids.length > 0) {
-                            key = ids[0];
-                        }
-                        ins = ctx.findById(key, id);
-                    }
-                    if (ins) {
-                        // console.log(ins)
-                        let str = ins.getRenderStr();
-                        // console.log('str:', str)
-
-                        let textNode = new Text(str);
-                        textNode.id = id;
-                        node.after(textNode);
-                        node.remove();
-                        ins.cache(textNode)
-                    } else {
-                        console.log(key, id)
-                    }
-                }
-                else {
-                    if (node.childNodes.length > 0) {
-                        parseValueToTextNode([...node.childNodes]);
-                    }
-                }
-            })
-            return nodes
-        }
-
-        function getNewNodes(newStr = '') {
-            let nodes = strToNodes(newStr);
-            parseValueToTextNode(nodes);
-            return nodes;
-        }
-
-        let ctx = {
-            domMap: new Map(),
-            rootEle: null,
-            get comments() {
-                if (this.rootEle) {
-                    return utils.getAllComments(this.rootEle)
-                }
-                return []
+    _listenSlot(item) {
+        item.$slotHost = this;
+        let self = this;
+        let content = item.textContent;
+        Object.defineProperty(item, "$textContent", {
+            get: function () {
+                return content
             },
-            init: function () {},
+            set: function (value) {
+                // console.log("sssss", value)
+                content = value;
+                self.onSlotValueChange(value)
+            },
+            enumerable: true,
+            configurable: true,
+        })
+    }
+    onSlotValueChange(newVal) {
+        this.shadowRoot.querySelector('#result').textContent = parseFloat(newVal).toFixed(2);
+    }
+    onSlotChange(e, {slotnodes} = {}) {
+        let slot1 = slotnodes[0];
+        if (slot1) {
+            let str = '';
+            slot1.forEach((item) => {
+                this._listenSlot(item)
+                str = str + item.textContent;
+            })
 
+            this.onSlotValueChange(str)
         }
 
-        let renderTpl = function(html = '', tempData  = {}, {functions, debug = false} = {}) {
-            let log = debug ? console.log.bind(this) : function() {}
+        // console.log(slotnodes)
+    }
+    unmounted() {
+        console.log("ZValue unmounted");
+    }
+}
 
-            return parseStaticTemplate(html, tempData, {
-                functions,
-                log
-            })
-        }
+ZValue.defsel('z-value', {
+    attrs: {
+        name: '',
+    }
+});
 
-        let watchedObject;
-        let functions = {};
+import { z } from "zod";
 
-        Object.keys(computed).forEach(key => {
-            let funReg = /function(\s*)\(([^)]+)\)/g;
-            let fun = computed[key];
-            let funStr = fun.toString();
+function testWeb() {
+    console.log( getLocalDatetime())
 
-            let mathchAll = funStr.matchAll(funReg);
-            let funargs = [...mathchAll];
-            let argName= funargs[0][2];
-            // console.log(argName)
-
-            let reg = new RegExp(argName + "\\s*[?]*\\.([\\d\\w_]+)", "g")
-
-            let watchMatch = funStr.matchAll(reg);
-            let watchesALl = [...watchMatch];
+    let datetimeRegexp = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d(?:\.\d+)?Z?/gm
+    let todoSchema = z.object({
+        id: z.string().default(Date.now() + ''),
+        text: z.string().default(''),
+        price: z.string().default(''),
+        num: z.string().default('0'),
+        datetime: z.string().regex(datetimeRegexp).default(getLocalDatetime() ),
+        completed: z.boolean().default(false),
+        items: z.array(z.any()).default([]),
+    });
 
 
-            let watches = []
-            watches = watchesALl.map(v => {
-                return v[1]
-            })
-            // console.log(watchesALl, watches);
 
-            Object.defineProperty(functions, key, {
-                get() {
-                    return {
-                        watches,
-                        value() {
-                            return  computed[key](watchedObject)
-                        }
+   let expire = new window.ZExpireStore('todos__' + "demo");
+    expire.clearExpired();
+
+    function parseInclude(html = '', {hasAuth =function () {return true}} = {}) {
+        let reg = /\#include\s*\(([^\)]*)\)/g
+        html = html.replace(reg, function (match,$1) {
+            let partHtml = document.getElementById($1).innerHTML;
+            if (!hasAuth($1)) {
+                partHtml = ''
+            }
+            return partHtml
+        });
+        return html;
+    }
+
+    function basicComponent() {
+        let ctx = buildAppCtx({
+            template:parseInclude(document.querySelector('[zelement="webapp"]').innerHTML, {
+                hasAuth() {
+                    return window.innerWidth > 600;
+                }
+            }),
+            data() {
+                let datetime =  getLocalDatetime();
+                return  {
+                    str: "teststr",
+                    num: 1,
+                    testFalse: false,
+                    time: '16:16:00',
+                    datetime: '2025-03-06T16:16:00Z',
+                    deepobj: {
+                        name: 'deepobj_name',
+                        items: [
+                            {
+                                id: Date.now(),
+                                completed: true
+                            }
+                        ]
+                    },
+                    items: [
+                    ],
+                }
+            },
+            async mounted() {
+
+                try {
+                    let res = await window.fetchJSON5('http://localhost:3000/get_json_list?name=todos');
+
+                    console.log("11111 mounted", res);
+                    if (Array.isArray(res.list)) {
+                        this.setData("items", res.list.map(v => {
+                            return v
+                        }));
+                    }
+                } catch (error) {}
+            },
+            computed: {
+                computednum: function(newData) {
+                    return newData?.num + 1
+                }
+            },
+            methods: {
+                handleAppendTodo() {
+
+                    const todoObj = todoSchema.optional().parse({});
+                    console.log(todoObj);
+                    this.data.items?.push(todoObj)
+                },
+                handleClick(e) {
+                    console.log(e, this)
+                    let d = this.$target.$ctx?.getBindData();
+                    console.log(d)
+                    if (d){
+                        setArrWhen(this.data.items, item => item.id === d.item.id,  (findItem) => {
+                            findItem.completed = !findItem.completed;
+                        });
                     }
                 },
-                enumerable: true,
-                configurable: true,
-            })
+                handleInput(e) {
+                    console.log(e, this)
+                    let d = this.$target.$ctx?.getBindData();
+                    let path = this.$target.dataset?.path;
+                    console.log(d)
+                    if (d && path) {
+                        setArrWhen(this.data.items, item => item.id === d.item.id,  (findItem) => {
+                            findItem[path] = this.$target.value
+                        });
+                    }
+                },
+                handleTimeChange(e) {
+                    console.log(e, this)
+                    this.data.datetime = this.$target.value
+                },
+                handleSubmit(e) {
+                    if (expire.isExpired()) {
+                        expire.setExpire(0.5)
+                        // console.log("sssss")
+                        postJSON('http://localhost:3000/set_json_list?name=todos', this.data.items)
+                    }
+                }
+            }
         });
 
 
-        /**
-         *
-         * @param rootEle
-         */
-        ctx.init = function (rootEle) {
-            let coreData = data();
-            watchedObject = onChange(coreData, function (path, value, previousValue, applyData) {
-                // console.log('this:', this);
-                console.log('path:', path);
-                console.log('value:', value);
-                console.log('previousValue:', previousValue);
-                // console.log('applyData:', applyData);
 
-                let arrayKeys = [...ctx.keysSet]
 
-                if (checkIsArrayPath(path, arrayKeys) && Array.isArray(value)) {
-                    ctx.findNeedRender(path).forEach(needRender => {
-                        ctx.renderNeedRender(needRender, {value, previousValue})
-                    })
-                    // console.dir(ctx.domMap)
-                }
-
-                else {
-                    let needRenders = ctx.findNeedRender(path);
-
-                    let computedKeys = ctx.getComputedKeys(functions, path);
-                    computedKeys.forEach(function(key) {
-                        ctx.findNeedRender(key).forEach(needRender => {
-                            needRender?.reload(watchedObject);
-                        })
-                    });
-
-                    needRenders.forEach(needRender => {
-                        ctx.renderNeedRender(needRender, {value, previousValue})
-                    });
-                }
-            });
-
-            // ctx.methods = methods;
-
-            ctx.rootEle = rootEle;
-            // console.log(template)
-            let ret = renderTpl('<template>'+template+'</template>', watchedObject, {functions, debug: false});
-            Object.defineProperty(ctx, "domMap", {
-                get() {
-                    return ret.methods.domMap
-                }
-            });
-            Object.defineProperty(ctx, "keysSet", {
-                get() {
-                    return ret.methods.keysSet
-                }
-            })
-            Object.defineProperty(ctx, "data", {
-                get() {
-                    return data
-                }
-            })
-
-            // console.log(ctx.keysSet)
-
-            let domes = getNewNodes(ret.str);
-            rootEle.append(...domes);
-
-            bindRootEle(rootEle, methods);
-
-            window.watchedObject = watchedObject;
-        }
-
-        /**
-         *
-         * @param path
-         * @param value {*}
-         */
-        ctx.setData = function (path = '', value) {
-            deepSet(ctx.data, path, value);
-        }
-
-        /**
-         *
-         * @param path
-         * @returns {*|*[]}
-         */
-        ctx.findNeedRender = function (path = '') {
-            // console.log(ctx.domMap, path);
-            function clearFromNode(start, end){
-                let subNodes = [];
-
-                let cur = start;
-                while (cur?.nextSibling !== end) {
-                    // console.log(cur)
-                    subNodes.push(cur.nextSibling);
-                    cur = cur.nextSibling;
-                }
-                console.log(start, subNodes);
-
-                subNodes.forEach(node => {
-                    let comments = utils.getAllComments(node);
-                    // console.log(comments);
-                    comments.forEach(comment => {
-                        let arr = comment.nodeValue.trim().split(':');
-                        // console.log(arr)
-                        let type = arr[0];
-                        let id = arr.at(1);
-                        let key = arr.at(2);
-                        if (type.startsWith("start__") && id) {
-                            ctx.deleteById(key, id);
-                        }
-                    })
-                    // console.dir(node);
-                    node.remove()
+        let testTasks = function* () {
+            yield function () {
+                watchedObject.str = "hello";
+            }
+            yield function () {
+                testSetData('items', v => {
+                    v.push({id: Date.now(), completed: false, items: [1]});
+                    return v
                 })
             }
-
-            if (ctx.domMap.has(path)) {
-                let doms = ctx.domMap.get(path);
-                let domsRet = doms.map(v => {
-
-                    if (v.type === "each") {
-                        let eachStartId = `start__each:${v.id}`;
-                        let eachEndId = `end__each:${v.id}`;
-
-                        let comments =  ctx.comments;
-                        let startC = comments.find(comment => comment.nodeValue.includes(eachStartId))
-                        let endC = comments.find(comment => comment.nodeValue.includes(eachEndId))
-                        // console.log(comments, startC)
-                        if (startC) {
-                            return {
-                                type: "each",
-                                key: v.key,
-                                /**
-                                 *
-                                 * @param index
-                                 * @returns {{start: Node | null, end: Node | null}}
-                                 */
-                                getSubItem(index = 0) {
-                                    // console.log(index)
-                                    let start = null
-                                    let end = null
-
-                                    let startIndex = 0;
-                                    let endIndex  = 0;
-                                    let startId = "start__each_item"
-                                    let endId = "end__each_item"
-
-                                    let cur = startC;
-                                    while (!cur?.nextSibling.isEqualNode(endC)) {
-                                        // console.log(cur)
-                                        if (start !== null && end !== null) {
-                                            break;
-                                        }
-                                        if (cur.nextSibling?.nodeValue?.includes(startId)) {
-                                            if (startIndex === index) {
-                                                start = cur.nextSibling;
-                                            }
-                                            else {
-                                                startIndex = startIndex + 1;
-                                            }
-                                        }
-                                        if (cur.nextSibling?.nodeValue?.includes(endId)) {
-                                            if (endIndex === index) {
-                                                end = cur.nextSibling;
-                                            }
-                                            else {
-                                                endIndex = endIndex + 1;
-                                            }
-                                        }
-                                        cur = cur.nextSibling;
-                                    }
-                                    return {
-                                        start, end
-                                    }
-                                },
-                                /**
-                                 *
-                                 * @param start
-                                 * @param end
-                                 */
-                                clearFromNode(start = startC, end = endC){
-                                    clearFromNode(start, end)
-                                },
-                                getDomFromData (arr= []) {
-                                    let newStr = v.getRenderStr(arr);
-                                    // console.log(newStr)
-                                    return getNewNodes(newStr)
-                                }
-                            }
-                        }
-                    }
-
-                    else {
-                        return {
-                            ...v,
-                            clear(type) {
-                                let eachStartId = `start__${type}:${v.id}`;
-                                let eachEndId = `end__${type}:${v.id}`;
-
-                                let comments =  ctx.comments;
-                                let startC = comments.find(comment => comment.nodeValue.includes(eachStartId))
-                                let endC = comments.find(comment => comment.nodeValue.includes(eachEndId))
-
-                                // console.log(startC, endC)
-
-                                clearFromNode(startC, endC)
-                                return {
-                                    start: startC,
-                                    end: endC,
-                                }
-                            },
-                            getDomFromData(value) {
-                                let newStr = v.getRenderStr(value);
-                                // console.log(newStr)
-                                return getNewNodes(newStr)
-                            }
-                        }
-                    }
+            yield function () {
+                testSetData('items', v => {
+                    v[0].completed = true
+                    return v
                 })
-                return domsRet.filter(v => v)
             }
-            return []
-        }
-
-        ctx.findById = function (key = '', id = '') {
-            // console.log(key, id);
-            if (ctx.domMap.has(key)) {
-                let arr = ctx.domMap.get(key);
-                let index = arr.findIndex(v => v.id === id);
-                if (index > -1) {
-                    return arr[index];
-                }
-            }
-            return null;
-        }
-
-        ctx.deleteById = function (key = '', id = '') {
-            // console.log(key, id);
-            if (ctx.domMap.has(key)) {
-                let arr = ctx.domMap.get(key);
-                let index = arr.findIndex(v => v.id === id);
-                if (index > -1) {
-                    arr.splice(index, 1);
-                }
-                ctx.domMap.update(key, arr);
-            }
-        }
-
-        ctx.getComputedKeys = function (computedFuns = {}, path = '') {
-            let computedKeys = [];
-            Object.keys(computedFuns).forEach(function(key) {
-                console.log(functions[key])
-                if (functions[key]?.watches) {
-                    computedKeys = computedKeys.concat(functions[key].watches);
-                }
-
-                else {
-                    let funcStr = Object.getOwnPropertyDescriptor(functions, key);
-                    // console.log("funcStr", funcStr?.get.toString())
-                    let regexp = /\{\{([^}]*)}}/g;
-                    let mathAll = funcStr?.get.toString().matchAll(regexp)
-                    // console.log([...mathAll])
-                    let mathces = [...mathAll]
-                    if (mathces.length > 0) {
-                        let end = mathces.at(-1);
-                        let arr = end[1].split(',');
-                        if (arr.includes(path)) {
-                            computedKeys.push(key);
-                        }
-                    }
-                }
-            });
-            return computedKeys
-        }
-
-
-        /**
-         *
-         * @param needRender {{type: string,getDomFromData?: function}}
-         * @param value
-         * @param previousValue
-         */
-        ctx.renderNeedRender = function (needRender, {value, previousValue} = {}) {
-            if (needRender.type === "if") {
-                let {start} = needRender?.clear("if");
-                if (start){
-                    let nodes = needRender.getDomFromData(value);
-                    start.after(...nodes);
-                }
-                // console.log(start)
-            }
-            if (needRender.type === "value") {
-                needRender?.reload()
-            }
-            console.log(needRender)
-            if (needRender.type === "each") {
-                let arrKey = needRender?.key ? needRender?.key : "id";
-                // if (needRender.key){
-                //     console.log("has key", needRender)
-                // }
-                /**
-                 * @type {[]}
-                 */
-                let arr = value;
-                let diffed = arrayDiffById(previousValue, arr, arrKey);
-                console.log(diffed)
-
-                function deleteSubItem(value, {from = needRender} = {}) {
-                    let index = previousValue.findIndex(v => v === value);
-                    if (index !== -1) {
-                        let subitem0 = from?.getSubItem(index);
-                        from?.clearFromNode(subitem0.start?.previousSibling, subitem0.end?.nextSibling);
-                    }
-                }
-
-                function appendSubItem(value, {from = needRender} = {}) {
-                    let index = arr.findIndex(v => v === value);
-                    if (index !== -1) {
-                        let preItem = from?.getSubItem(index - 1);
-                        console.log(index, preItem)
-                        if (preItem.end !== null) {
-                            let insertEle = preItem.end;
-                            let domes = from?.getDomFromData([value]);
-                            insertEle.after(...domes)
-                        }
-                    }
-                }
-
-                diffed.deleted.forEach((del_item) => {
-                    deleteSubItem(del_item, {from: needRender});
+            yield function () {
+                testSetData('items', v => {
+                    v[1].completed = true
+                    return v
                 })
-
-                diffed.added.forEach((add_item) => {
-                    appendSubItem(add_item, {from: needRender});
-                });
+            }
+            yield function () {
+                watchedObject.testFalse = true
+            }
+            yield function () {
+                watchedObject.testFalse = false
+            }
+            yield function () {
+                watchedObject.num = 3;
             }
         }
-        return ctx
+
+        return {ctx, testTasks}
     }
 
     setTimeout(() =>{
 
-
-
-        let ctx = buildAppCtx({
-            template: htmlString,
-            data() {
-                return tempData
-            },
-            computed,
-            methods: {
-                handleClick(e) {
-                    console.log(e)
-                }
-            }
-        });
-
         function test() {
+
+            let {ctx,testTasks} = basicComponent()
 
             let rootEle =  document.querySelector('#webapp');
 
@@ -602,26 +271,7 @@ function testWeb() {
                 ctx.setData(path, fun(oldVal, watchedObject));
             }
 
-            globalThis.testTasks = function* () {
-                yield function () {
-                    watchedObject.str = "hello";
-                }
-                yield function () {
-                    testSetData('items', v => {
-                        v.push({id: Date.now(), items: [1]});
-                        return v
-                    })
-                }
-                yield function () {
-                    watchedObject.testFalse = true
-                }
-                yield function () {
-                    watchedObject.testFalse = false
-                }
-                yield function () {
-                    watchedObject.num = 3;
-                }
-            }
+            globalThis.testTasks = testTasks
         }
 
         test()
@@ -630,4 +280,6 @@ function testWeb() {
     
 }
 
-testWeb()
+setTimeout(() => {
+    testWeb()
+},300)

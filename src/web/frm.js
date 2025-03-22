@@ -62,45 +62,62 @@ export function deepGet (obj, path, defaultValue, delimiter) {
     } else {
         return defaultValue;
     }
-};
+}
+
+let NO_APPEND_ATTR = Symbol('NO_APPEND_ATTR');
    
-function attrsToStr(attribs = {}) {
-    let attrStr = ''
+function attrsToStr(attribs = {},handle) {
+    let attrStr = '';
     Object.keys(attribs).forEach(attrname => {
-        attrStr  = attrStr + ` ${attrname}="${attribs[attrname]}"`
+        let newval = attribs[attrname];
+        if (handle) {
+            newval = handle(attrname, attribs[attrname]);
+        }
+        if (newval !== NO_APPEND_ATTR) {
+            attrStr  = attrStr + ` ${attrname}="${newval}"`;
+        }
     })
     return attrStr
 }
 
 let parseToHtml = {
     handlers: {
-        beforeRenderTag(tagname = '', childNode = {attribs: {}}) {
+        beforeRenderTag(tagname = '',{options} = {}) {
+            // console.log(options)
             return [tagname]
         },
-        handleEachRender(curuuid = '', ruleConds = [], options = {}, handleContent, {partials, byCond, travel, createSubOption} = {}) {
-            // console.log(partials)
+        handleEachRender(curuuid = '', ruleConds = [], options = {}, handleContent, {eachBlockValueName, partials, byCond, travel, createSubOption} = {}) {
+
             let uid = curuuid;
             let arr = options.methods.get(ruleConds[0]);
             let nodes = partials[0].nodes.map(v => v.cloneNode(true));
+
             options.methods.domMap.set(ruleConds[0], {
                 id: uid,
                 type: "each",
                 key: byCond ?  byCond : "",
                 nodes: nodes,
-                getRenderStr(arr = [], newNodes = nodes) {
+                getRenderStr(arr = [], startIndex = 0) {
                     let str = "";
                     arr.forEach((v, index)=>{
-                        let suboption = createSubOption(v, index);
-                        // console.log(suboption.methods.data())
-                        travel(newNodes, suboption);
+                        index = index + startIndex
+                        let suboption = createSubOption(v, index, arr);
+
+                        travel(nodes, suboption);
                         str = str + `\n<!--start__each_item:${uid}:${ruleConds[0]}-->`
                         str = str + '\n' + suboption.str;
                         str = str + `\n<!--end__each_item:${uid}:${ruleConds[0]}-->`
                     });
                     return str;
+                },
+                getData() {
+                    return {
+                        ...options.methods.data(),
+                    }
                 }
             });
             options.methods.keysSet.add(ruleConds[0]);
+            options.methods.eachBlocks.set(ruleConds[0], eachBlockValueName);
             if (Array.isArray(arr)) {
                 options.str = options.str + `\n<!--start__each:${uid}:${ruleConds[0]}-->\n`
                 arr.forEach((v, index)=>{
@@ -129,6 +146,7 @@ let parseToHtml = {
                     cur: null,
                     cache(cacheTextNode) {
                         this.cur = cacheTextNode;
+                        this.cur.$isOrigin  = true
                     },
                     getRenderStr(newData) {
                         return runExpr(content, {
@@ -139,7 +157,16 @@ let parseToHtml = {
                     reload(newData) {
                         // console.log('sssss', this)
                         if (this.cur) {
-                            this.cur.textContent = this.getRenderStr(newData)
+                            let newval = this.getRenderStr(newData);
+                            this.cur.textContent = newval;
+                            if ( this.cur.$textContent) {
+                                this.cur.$textContent = newval;
+                            }
+                        }
+                    },
+                    getData() {
+                        return {
+                            ...options.methods.data(),
                         }
                     }
                 }
@@ -159,7 +186,7 @@ let parseToHtml = {
 
                 c.getRenderStr = function (newData) {
                     // console.log(functions[content])
-                    return functions[content]?.value()
+                    return functions[content]
                 }
                 options.methods.domMap.set(content, c);
             }
@@ -200,7 +227,11 @@ let parseToHtml = {
                     }
 
                     return isMatches
-                })
+                });
+
+
+                // console.log(elseIfs)
+                // console.log(elses)
 
                 if (elses.length > 0 && !isMatches) {
                     suboption = createSuboption()
@@ -239,6 +270,11 @@ let parseToHtml = {
                        return ret;
                    }
                    return ''
+                },
+                getData() {
+                    return {
+                        ...options.methods.data(),
+                    }
                 }
             })
 
@@ -259,7 +295,7 @@ let parseToHtml = {
 }
 
 
-class CondsMap {
+export class CondsMap {
     /**
      *
      * @type {Map<string, *[]>}
@@ -289,11 +325,25 @@ class CondsMap {
     has(key) {
         return this.data.has(key);
     }
+    serialize() {
+        let obj = {};
+        [...this.data].forEach((value, key) => {
+            obj[key] = value;
+        });
+        console.log(obj);
+        return JSON.stringify(obj);
+    }
+    deserialize(str = '') {
+        let obj = JSON.parse(str);
+        Object.keys(obj).forEach((key) => {
+            this.data.set(key, obj[key]);
+        })
+    }
 }
 
 export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, log = function() {}, handlers = parseToHtml.handlers} = {}) {
     let tagRegexp = /\{(\#[^\s]*)\s*([^}]*)\}/g;
-    let flcRegexp = /\{(\:+)\s*([^}\s]*)(.*)\}/g;
+    let flcRegexp = /\{(\:+)\s*([^}]*)(\s*)\}/g;
     let varRegexp = /\{=\s*([^}]*)\}/g;
 
     let endRegexp = /\{(\/+)\s*([^}\s]*)(.*)\}/g;
@@ -323,7 +373,6 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
 
 
     let parsed = parse(htmlString);
-    console.log(parsed)
     let domarr = parsed.filter(v => v.name === "template")
     let content = domarr[0]
 
@@ -341,12 +390,14 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
 
     /**
      *
-     * @type {{domMap: CondsMap, path: string, data(): {}, get(*): *}}
+     * @type {{domMap: CondsMap, keysSet: Set<any>, eachBlocks: CondsMap, path: string, data(): {}, get(*): *}}
      */
     let methods = {
         domMap: new CondsMap(),
         keysSet: new Set(),
+        eachBlocks:new CondsMap(),
         path: '',
+        valueMap: new Map(),
         data() {
             return tempdata
         },
@@ -359,7 +410,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
 
     /**
      *
-     * @type {{str: string, methods: {domMap: CondsMap, keysSet: Set, path: string, data(): {}, get(*): *}}}
+     * @type {{str: string, methods: {domMap: CondsMap, keysSet: Set, eachBlocks: CondsMap, path: string, data(): {}, get(*): *}}}
      */
     let options = {
         str: '',
@@ -399,10 +450,11 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                     ruleCond = value
                 }
                 else if (t.startsWith('{:')) {
-                    let a =  t.matchAll(flcRegexp);
+                    let flcreg = /\{(\:+)\s*([^}\s]*)\s*([^}]*)\s*\}/g
+                    let a =  t.matchAll(flcreg);
                     let [_, key, value, cond] = [...a][0];
                     // console.log(key, value);
-
+                    // console.dir(childNode)
                     isInner = true
 
                     let obj = {
@@ -444,6 +496,9 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
 
                         if (handlers?.handleEachRender) {
                             function  createSubOption(v, index) {
+                                let arr = options.methods.get(ruleConds[0]);
+                                // console.log(ruleConds[0], arr, byCond)
+
                                 return {
                                     str: '',
                                     methods: {
@@ -457,7 +512,18 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                                             }
 
                                             if (eachBlockIndexName) {
-                                                newdata[eachBlockIndexName] = index
+                                                // newdata[eachBlockIndexName] = index
+                                                // console.log(arr, v)
+                                                Object.defineProperty(newdata, eachBlockIndexName, {
+                                                    get: function () {
+                                                        if (byCond) {
+                                                            return arr.findIndex(i => i[byCond] === v[byCond])
+                                                        }
+                                                        return index
+                                                    },
+                                                    enumerable: true,
+                                                    configurable: true,
+                                                })
                                             }
                                             return newdata
                                         },
@@ -469,7 +535,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                                 travel(partials[0].nodes, suboption);
                                 options.str = options.str + suboption.str
                             //    log(suboption.str);
-                            }, {partials, byCond, travel, createSubOption})
+                            }, {eachBlockValueName, partials, byCond, travel, createSubOption})
                        }
 
                     }
@@ -491,9 +557,13 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                             };
                         }
 
+
                         let partialsElse = partials.filter(v => {
                             return v.type
                         });
+
+
+                        // console.log(partialsElse)
 
                         let elseIfs = partialsElse.filter(v => {
                             return v.type === 'else-if'
@@ -525,19 +595,34 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                 else {
 
                     let c = childNode.data;
- 
-                    if (childNode?.nextSibling?.name ===  "nogap") {
-                        c = ''
-                    }
-                    if (childNode?.previousSibling?.name ===  "nogap") {
-                        c = ''
+
+                    let reg = /^([\s\n]*)$/g
+
+                    if (reg.test(c)) {
+                        if (childNode?.nextSibling?.name ===  "nogap") {
+                            c = ''
+                        }
+                        if (childNode?.previousSibling?.name ===  "nogap") {
+                            c = ''
+                        }
+
+                        if (childNode?.nextSibling?.name ===  "nogap" && childNode?.previousSibling?.name ===  "nogap") {
+                            c = '\n'
+                        }
                     }
 
-                    if (childNode?.nextSibling?.name ===  "nogap" && childNode?.previousElementSibling?.localName ===  "nogap") {
-                        c = '\n'
-                    }
 
-                    options.str = options.str +  c;
+                    if (!isPartial) {
+                        options.str = options.str +  c;
+                    }
+                    else {
+                        if (!isInner) {
+                            partials[0].nodes.push(childNode)
+                        }
+                        else {
+                            partials.at(-1).nodes.push(childNode)
+                        }
+                    }
                 }
             }
             else {
@@ -549,7 +634,7 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                     if (tagname.includes('nogap')) {
     // 
                     }
-                    else if (tagname.includes('value')) {
+                    else if (tagname === "value") {
                         let content = ''
 
                         childNode.children.forEach(v => {
@@ -563,10 +648,46 @@ export function parseStaticTemplate(html = '', tempdata = {}, {functions = {}, l
                     }
                     else {
                         if (childNode.children) {
-                            let attrStr = attrsToStr(childNode.attribs);
+                            let uid = createUUID();
+                            let needCache = false;
+                            let attrmap = {};
+                            let attrStr = attrsToStr(childNode.attribs, function (attrname, value) {
+                                // console.log(key, value)
+                                if (attrname.startsWith(":")) {
+                                    attrmap[attrname.slice(1, attrname.length)] = value
+                                    let retval = runExpr(value, {
+                                        ...options.methods.data(),
+                                        // ...functions
+                                    });
+                                    if (retval === false) {
+                                        return NO_APPEND_ATTR
+                                    }
+                                    if (typeof retval === "undefined") {
+                                        return '';
+                                    }
+                                    return retval
+                                }
+                                if (attrname.startsWith(":") || attrname.startsWith("bind:")) {
+                                    needCache = true;
+                                    options.methods.valueMap.set(uid, {
+                                        attrmap,
+                                        getBindData() {
+                                            return {
+                                                ...options.methods.data(),
+                                                // ...functions
+                                            }
+                                        }
+                                    })
+                                }
+                                return value
+                            });
+
+                            if (needCache) {
+                                attrStr = attrStr + ` __uid__="${uid}" `
+                            }
                             
                             if (handlers?.beforeRenderTag) {
-                                [tagname] = handlers.beforeRenderTag(tagname, childNode)
+                                [tagname] = handlers.beforeRenderTag(tagname, {childNode, options})
                             }
 
                             options.str = options.str + `<${tagname} ${attrStr}>`

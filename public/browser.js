@@ -4,6 +4,22 @@ let xueqiuOption = {
     cci: -170
 };
 
+let pinghaofanOption = {
+    "SH600115": {
+        ccishow: [-150, 100]
+    }
+}
+
+window.getGPSymbolConfig = function () {
+    let symbol = SNB.data.quote.symbol;
+    if (pinghaofanOption[symbol]) {
+        return pinghaofanOption[symbol];
+    }
+    else {
+        return {}
+    }
+}
+
 window.getBollData = function() {
     return GpUtils.calcBollData().map(v => {
         return parseFloat(v.toFixed(2))
@@ -61,9 +77,13 @@ function handleParam() {
         let bollData = [];
         let arr = [];
 
+        let gpOption = getGPSymbolConfig()
+
         setTimeout(() => {
 
             let f = globalSearchParams.get('hat');
+
+
  
     
             let tab = globalSearchParams.get('auto_tab') ?? '';
@@ -177,9 +197,16 @@ function handleParam() {
         }, 10000);
 
         setTimeout(() => {
+            let ccishow = gpOption?.ccishow ?? []
             globalThis.workerTimers.setInterval(() => {
                 // console.log('interval')
-                document.title = `${getCurName()} ${arr?.at(-1)} ${bollData.join(' ')}`?? ''
+                let ext = '';
+
+
+                if (arr?.at(-1) < (ccishow[0] ?? -120) || arr?.at(-1) > (ccishow[1] ?? 120)) {
+                    ext = ` ${arr?.at(-1)} ${bollData.join(' ')}`;
+                }
+                document.title = `${getCurName()} ${ext}`
             }, 210)
         }, 300)
     }

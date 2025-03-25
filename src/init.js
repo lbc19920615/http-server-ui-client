@@ -94,12 +94,17 @@ function fetchDirectoryURL(url = '', baseHref = '') {
     }).then(data => {
       document.getElementById('tpl').innerHTML = data
       let arr = []
-      $('#tpl tr').each(function (index, item) {
+      document.querySelectorAll('#tpl tr').forEach(function (item, index) {
         // console.log(index, item)
         let id =  uuidv4()
-        let href = $(item).find('.display-name > a')
-            .attr('href').replace(randomStr, '');
-        let lastModified = $(item).find('.last-modified').html();
+        // let href = $(item).find('.display-name > a')
+        //     .attr('href').replace(randomStr, '');
+        // console.log(item.querySelector(':scope .display-name > a'),item.querySelector('.display-name > a'))
+        let href = item.querySelector(':scope .display-name > a')
+            .getAttribute('href').replace(randomStr, '');
+
+        // let lastModified = $(item).find('.last-modified').html();
+        let lastModified = item.querySelector(':scope .last-modified').innerHTML;
         // console.log(lastModified)
 
         let lastModifiedDate = getDateFromlastModified(lastModified);

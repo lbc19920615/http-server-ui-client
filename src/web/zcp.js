@@ -1,5 +1,5 @@
 import onChange from 'on-change';
-import {bindRootEle, travelChildren, utils} from "../../htmlapp/src/core.js"
+import {bindRootEle, travelChildren, utils} from "../../../htmlapp/src/core.js"
 import {CondsMap, deepSet, parseStaticTemplate} from "./frm";
 import {arrayDiffById} from "./ext";
 import {getExprAst, runExpr} from "./jexpr";
@@ -234,6 +234,8 @@ export function  buildAppCtx({template = '', data = function () { return {} }, m
         }
     }
 
+    ctx.bindRootEle = {}
+
     // console.log(ctx.lifeCycles)
 
     ctx.template = template;
@@ -318,6 +320,11 @@ export function  buildAppCtx({template = '', data = function () { return {} }, m
                 if (!element.$ctx) {
                     element.$ctx = {}
                 }
+                element.$ctx.hasExp = function (v) {
+                    // console.log(element.$ctx.attrmap)
+                    let values = Object.values(element.$ctx.attrmap)
+                    return values.includes(v)
+                }
                 element.$ctx.setAttr = function(attrname, value) {
                     if (value === false) {
                         element.removeAttribute(attrname);
@@ -331,7 +338,6 @@ export function  buildAppCtx({template = '', data = function () { return {} }, m
             }
 
             else if (attr.name.startsWith(":")) {
-
                 element.setAttribute(attr.name.slice(1, attr.name.length), value);
 
                 setTimeout(() => {
@@ -390,30 +396,32 @@ export function  buildAppCtx({template = '', data = function () { return {} }, m
                 let map = ctx.eachBlocks;
 
                 if (isLikeArrayPath) {
-                    console.log("isLikeArrayPath", ctx, isLikeArrayPath)
                     let index = isLikeArrayPath.index;
-                    console.log(index)
+                    console.log("isLikeArrayPath", ctx, isLikeArrayPath, index)
                     let pathLikeArr = map.get(isLikeArrayPath.key);
                     if (Array.isArray(pathLikeArr)) {
                         pathLikeArr.forEach(likestr => {
                             let eachArrItems = ctx.findNeedRender(isLikeArrayPath.key);
                             let findChangeRoots =eachArrItems[0].getSubItemEles(index)
-                            console.log(findChangeRoots  )
                             let truepath = replaceArrayPath(path, isLikeArrayPath.key, likestr);
                             let needRenders = ctx.findNeedRender(truepath);
-                            console.log(truepath, needRenders);
-
-
+                            console.log(findChangeRoots, truepath, needRenders);
 
                             ctx.valueMap.forEach((vit, key) => {
                                 Object.keys(vit.attrmap).forEach(attrname => {
                                     let attrvalue = vit.attrmap[attrname] + '';
+                                    // console.log('attrvalue', attrvalue, truepath)
                                     if  (attrvalue.includes(truepath)) {
 
                                         travelChildren(findChangeRoots, {
                                             handle(child) {
-                                                if (child?.$ctx) {
-                                                    child?.$ctx.setAttr(attrname, value);
+                                                if (child?.$ctx && child?.$ctx.hasExp(truepath)) {
+                                                    // console.log(child)
+                                                    // let isCurEvent = ctx.bindRootEle.checkIsCurrentEventTarget(child)
+                                                    // console.log('isCurEvent', isCurEvent, child)
+                                                    // if (!isCurEvent) {
+                                                        child?.$ctx.setAttr(attrname, value);
+                                                    // }
                                                 }
                                             }
                                         })
@@ -462,7 +470,7 @@ export function  buildAppCtx({template = '', data = function () { return {} }, m
             }
 
             requestAnimationFrame(() => {
-                bindRootEle(rootEle, ctx.insmethods, ctx);
+                ctx.bindRootEle = bindRootEle(rootEle, ctx.insmethods, ctx);
             })
         });
 
@@ -498,7 +506,7 @@ export function  buildAppCtx({template = '', data = function () { return {} }, m
         let domes = getNewNodes(ret.str);
         rootEle.append(...domes);
 
-        bindRootEle(rootEle, ctx.insmethods, ctx);
+        ctx.bindRootEle = bindRootEle(rootEle, ctx.insmethods, ctx);
 
         window.watchedObject = watchedObject;
 

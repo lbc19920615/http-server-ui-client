@@ -139,7 +139,6 @@ window.testfloyd = function() {
         searchMid(m)
     }
     console.dir(structuredClone(juzhen))
-
 }
 
 
@@ -148,38 +147,51 @@ window.testsort = function() {
 
     function bubbleSort(arr = []) {
         let n = arr.length
-        let curSortIndex = 0;
+        let curSortIndex = n;
 
-        while (curSortIndex < n) {
-            let minIndex = curSortIndex
-            for (let i = minIndex + 1;  i<n; i++) {
-                if (arr[i] < arr[minIndex]) {
-                    minIndex = i
+        // while (curSortIndex < n) {
+        //     let minIndex = curSortIndex
+        //     for (let i = minIndex + 1;  i<n; i++) {
+        //         if (arr[i] < arr[minIndex]) {
+        //             minIndex = i
+        //         }
+        //     }
+        //
+        //     let cache = arr[minIndex]
+        //     for (let i = minIndex; i > curSortIndex; i--) {
+        //         arr[i] = arr[i-1]
+        //     }
+        //     arr[curSortIndex] = cache
+        //
+        //     curSortIndex++
+        // }
+
+        while (curSortIndex > 0) {
+            for (let i = curSortIndex; i > 0; i--) {
+                if (arr[i - 1] > arr[i]) {
+                    let cache = arr[i - 1]
+                    arr[i - 1] = arr[i]
+                    arr[i] = cache
                 }
             }
-
-            let cache = arr[minIndex]
-            for (let i = minIndex; i > curSortIndex; i--) {
-                arr[i] = arr[i-1]
-            }
-            arr[curSortIndex] = cache
-
-            curSortIndex++
+            curSortIndex--;
         }
 
         return arr
     }
 
-    console.log(bubbleSort(arr));
+    console.log(bubbleSort(arr.map(v => v)));
     
     function quickSort(arr) {
         function partion(nums, lo, hi) {
-            let mid = nums[lo]
+            let mid = nums[lo];
+            // i 都是比mid大的
             let i = lo + 1;
+            // j 都是比mid小的
             let j = hi;
             while( i <= j) {
                 while ( i < hi && nums[i] <= mid) i++;
-                while ( j > lo && nums[i] > mid) j--;
+                while ( j > lo && nums[j] > mid) j--;
                 if (i >= j) {
                     break;
                 }
@@ -206,7 +218,7 @@ window.testsort = function() {
     }
 
 
-    console.log(quickSort(arr));
+    console.log(quickSort(arr.map(v => v)));
 
 }
 

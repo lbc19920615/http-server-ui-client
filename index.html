@@ -11,7 +11,7 @@
       // VConsole will be exported to `window.VConsole` by default.
       //var vConsole = new window.VConsole();
     </script>
-
+    <script src="/dayjs.min.js"></script>
     <script src="/zy.js"></script>
     <link rel="stylesheet" href="element-plus.css" />
 
@@ -21,7 +21,6 @@
     <!-- <script src="https://unpkg.com/scheduler-polyfill@next"></script> -->
     <script type="module" src="/demos/shadow/index.js"></script>
 
-    <script src="/dayjs.min.js"></script>
 <!--    <script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.13/plugin/quarterOfYear.js"></script>-->
 <!--    <script src="https://cdn.bootcdn.net/ajax/libs/dayjs/1.11.13/plugin/weekOfYear.js"></script>-->
 <!--    <script>-->
@@ -54,75 +53,86 @@
         <div bind:click="handleSubmit">提交</div>
     </template>
 
-    <div id="webapp">
-        <h1>Shopping list</h1>
-        <template zelement="webapp" type="text/html">
-
-            <div>
-                <z-fcinput type="datetime-local" :value="datetime" bind:change="handleTimeChange"></z-fcinput>
-            </div>
-            <z-list >
-                <div slot="content">
+    <z-config>
+        <div class="z-container">
+            <div id="webapp">
+                <h1>Shopping list</h1>
+                <template zelement="webapp" type="text/html">
                     <div>
-                        {= str} {= num} <z-value>{= num + 1}</z-value>
+                        <z-fcinput type="datetime-local"
+                                   show-format="YYYY/MM/DD HH:mm:ss"
+                                   :value="datetime" bind:change="handleTimeChange"></z-fcinput>
                     </div>
-                    <div>
-                        {= computednum}
-                        {= deepobj.name}
-                    </div>
+                    <z-list >
+                        <div slot="content">
+                            <div>
+                                {= str} {= num} <z-value>{= num + 1}</z-value>
+                            </div>
+                            <div>
+                                {= computednum}
+                                {= deepobj.name}
+                            </div>
 
-                    <div class="deepobj">
+                            <div class="deepobj">
 
-                        {#each deepobj.items as deepobj_item, deepobj_item_index}
-                        <z-list-item>deepobj items</z-list-item>
-                        <div> {= deepobj_item_index} deepobj_item</div>
+                                {#each deepobj.items as deepobj_item, deepobj_item_index}
+                                <z-list-item>deepobj items</z-list-item>
+                                <div> {= deepobj_item_index} deepobj_item</div>
 
-                        {#if deepobj_item.completed}
-                        <div class="row">已完成</div>
-                        {:else}
-                        <div class="row">未完成</div>
-                        {/if}
+                                {#if deepobj_item.completed}
+                                <div class="row">已完成</div>
+                                {:else}
+                                <div class="row">未完成</div>
+                                {/if}
 
-                        {/each}
+                                {/each}
 
-                        #include(webapp_action_tpl)
-                    </div>
-                    {#each items as item, item_index by id}
-                    <z-list-item>item_{= item_index}</z-list-item>
-                    <div class="sub">
-                        <div class="row">
-                            <input  bind:change="handleInput" :readonly="item.completed" data-path="price"  :value="item.price" />
+                                #include(webapp_action_tpl)
+                            </div>
+                            {#each items as item, item_index by id}
+                            <z-list-item>item_{= item_index}</z-list-item>
+                            <div class="sub">
+                                <div class="row">
+                                    <input  bind:change="handleInput" :readonly="item.completed" data-path="price"  :value="item.price" />
 
-                            <input type="number"  bind:change="handleInput" :readonly="item.completed" data-path="num"  :value="item.num" />
+                                    <input type="number"  bind:change="handleInput" :readonly="item.completed" data-path="num"  :value="item.num" />
 
-                            <input
-                                    type="datetime-local"
-                                    bind:change="handleInput" :readonly="item.completed"  data-path="datetime" :value="item.datetime"
-                            />
+                                    <input
+                                            type="datetime-local"
+                                            bind:change="handleInput" :readonly="item.completed"  data-path="datetime" :value="item.datetime"
+                                    />
 
-                            {#if item.completed}<div>已完成</div>{:else} 未完成sss {/if}
-                            <div  bind:click="handleClick" :sid="item.id" >更改</div>
+                                    <z-fcinput type="select" :value="item.symbol" bind:change="handleInput"  data-path="symbol" >
+                                        <option value="SH600115">中国东航</option>
+                                        <option value="SZ001213">中铁特货</option>
+                                    </z-fcinput>
+
+                                    {#if item.completed}<div>已完成</div>{:else} 未完成sss {/if}
+                                    <div  bind:click="handleClick" :sid="item.id" >更改</div>
+                                </div>
+
+                                <div>附件</div>
+                                {#each item.items as sub_item, sub_item_index}
+                                <div>{= item_index} sub_item {= sub_item_index}</div>
+                                {/each}
+
+
+                                {#if testFalse}
+                                <div>if_dom</div>
+                                {:else-if item}
+                                <div>else_if_dom2</div>
+                                {:else}
+                                <div>else_dom</div>
+                                {/if}
+                            </div>
+                            {/each}
                         </div>
+                    </z-list>
+                </template>
+            </div>
+        </div>
+    </z-config>
 
-                        <div>附件</div>
-                        {#each item.items as sub_item, sub_item_index}
-                        <div>{= item_index} sub_item {= sub_item_index}</div>
-                        {/each}
-
-
-                        {#if testFalse}
-                        <div>if_dom</div>
-                        {:else-if item}
-                        <div>else_if_dom2</div>
-                        {:else}
-                        <div>else_dom</div>
-                        {/if}
-                    </div>
-                    {/each}
-                </div>
-            </z-list>
-        </template>
-    </div>
 
     <div id="tpl" style="display: none"></div>
     <div id="app">
@@ -235,10 +245,11 @@
     <!-- Import Vue 3 -->
     <script src="/Vue.js"></script>
     <script src="/vue-router.js"></script>
+<!--    <script src="/element-plus.js"></script>-->
     <script type="module" src="/src/main.js"></script>
-    <script src="/echarts.js"></script>
+    <script async src="/echarts.js"></script>
     <script src="/assets/ffmpeg/package/dist/umd/ffmpeg.js"></script>
     <script src="/assets/util/package/dist/umd/index.js"></script>
-<!--    <script src="/jquery.js"></script>-->
+<!--    <script async src="/jquery.js"></script>-->
 </body>
 </html>

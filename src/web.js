@@ -1,8 +1,9 @@
-import '../htmlapp/src/webcom.js'
+import {initGlobal} from '../../htmlapp/src/webcom.js'
+
+initGlobal()
 
 
-
-import {BaseEle} from "../htmlapp/src/core.js"
+import {BaseEle} from "../../htmlapp/src/core.js"
 import {deepGet} from "./web/frm";
 import {buildAppCtx} from "./web/zcp";
 import {setArrWhen} from "./web/ext";
@@ -106,6 +107,7 @@ function testWeb() {
         id: z.string().default(Date.now() + ''),
         text: z.string().default(''),
         price: z.string().default(''),
+        symbol: z.string().default(''),
         num: z.string().default('0'),
         datetime: z.string().regex(datetimeRegexp).default(getLocalDatetime() ),
         completed: z.boolean().default(false),
@@ -196,10 +198,12 @@ function testWeb() {
                     console.log(e, this)
                     let d = this.$target.$ctx?.getBindData();
                     let path = this.$target.dataset?.path;
-                    console.log(d)
+                    // console.log(d, path)
                     if (d && path) {
                         setArrWhen(this.data.items, item => item.id === d.item.id,  (findItem) => {
+                            // console.log(findItem)
                             findItem[path] = this.$target.value
+                            // findItem['symbol'] = '111'
                         });
                     }
                 },
@@ -209,9 +213,12 @@ function testWeb() {
                 },
                 handleSubmit(e) {
                     if (expire.isExpired()) {
-                        expire.setExpire(0.5)
+                        expire.setExpire(0.5);
                         // console.log("sssss")
                         postJSON('http://localhost:3000/set_json_list?name=todos', this.data.items)
+                            .then(_ => {
+                                window.Ztoastr.message('提交了')
+                            })
                     }
                 }
             }
